@@ -1,0 +1,392 @@
+\documentclass[10pt]{article}
+
+%\nofiles
+
+\usepackage[dvips]{graphicx}
+\usepackage{epsfig}
+\usepackage{colordvi}
+%\usepackage{picinpar}
+\usepackage{anysize}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amscd}
+\usepackage{setspace}
+\usepackage{psfrag}
+\usepackage{fancyhdr}
+%\usepackage{extarrows}
+%\usepackage{chemarr}
+\usepackage{hyperref}
+\usepackage{amsthm}
+
+\pagestyle{fancy}
+
+\begin{document}
+\title{VSL Design Notes}
+\author{Sheer El-Showk}
+%\date{06/9/04}
+\maketitle
+
+
+
+%%
+% Include Standardized Customization
+%%
+%\input{latex_sheer_setup.tex}
+%\input{local_setup.tex}
+
+%\doublespacing
+%\onehalfspacing
+
+%%%%%
+%
+% Document Starts here
+%
+%%%%%
+
+\tableofcontents
+\newpage
+
+This document is intended to accompany and clarify the data model and UML files for the VSL design.  It should be compact.  More details explanations and ideas should be left to the {\em p2p\_fs.pdf} file.
+
+\section{Terminology}
+
+\paragraph{Diff model} 
+
+We support flexible diff models ... e.g. binary diffing, data chunking, etc...  The VSL is diff model neutral with the diff-model specific data (e.g. chunk number, etc...) stored in a implementation-specific Data Chunk Header.
+
+\paragraph{Auth/Perm model}
+
+We are also auth-model neutral.  All entries in the VSL backend have a permissions object which is implementation specific.  As an example consider the following model:  all data in a version is encrypted with a symmetric version key (generated for each version).  The version key in turn is encrypted with the public key of any user/group that should have access and all these encrypted copies are stored in the permissions object.  
+
+\paragraph{Signatures}
+
+All data in the VSL should be signed to avoid tampering.  The signature is usually an md5 hash of the data encrypted using the version key of the version or the public key of all owning users/groups.
+
+\section{Data Model}
+
+\subsection{Objects}
+
+The data model is built around two immutable objects, a {\em version} and a {\em
+data chunk}, as well as a mutable object, the {\em EntryHeader}.  Although the latter
+can be modified we only allow ``puts'' not ``pops'' so data integrity is never
+an issue.
+
+\subsubsection{Index}
+
+An index is essentially any ``put-mostly'' list.  While we could implement this
+as a special kind of file we do not because indices are accessed differently.
+They are subject to many small and frequent changes and creating new versions
+for each modification does not seem efficient.  Thus an index is stored
+essentially as a version tree.  Data is simply put into the relevant backend
+entry along with a unique identifier and a version number.  To update or delete
+data from an index a new record is added updating the status of an older record
+(along with the relevant version number).  If two entries refer to the same
+record version with conflicting operations this is simply treated as a branch
+event.
+
+The Index header stores ownership, etc... info for the index.
+\begin{tabular}{|l|p{12cm}|}
+\hline
+vslID & The unique vsl identifier for this entry.\\
+\hline
+permissions & A serialized object implementing a permissions system (see below).
+Note this only controls read-access (i.e. keys) to the data in the entry.  Write
+access should be controlled via the storage layer. \\
+\hline
+\end{tabular}
+
+
+The index's data is all stored in a single multi-map address associated with the
+index.  The data is {\em unordered} and each entry is an {\em IndexEntry} object
+\begin{tabular}{|l|p{12cm}|}
+\hline
+indexEntryID & A unique ID generated for this entry. \\
+\hline
+permissions & A serialized object implementing a permissions system (see below).
+Note this only controls read-access (i.e. keys) to the data in the entry.  Write
+access should be controlled via the storage layer. \\
+\hline
+versionEntry &  Each entry is a version header with the following info:
+\begin{itemize}
+	\item vslID of version data
+	\item verionString 
+	\item prevVersionString
+	\item timeStamp
+\end{itemize}\\
+\hline
+\end{tabular}
+
+
+\subsubsection{EntryHeader (put-only)}
+
+An entry header provides the first point of access to an entry.  It is
+essentially a list of version headers.
+
+The entry header is essentially a ``drop-box'' where new versions associated
+with an entry are registered.  Anyone with the correct key should be able to
+add a version to the list below but we do not allow version deletion or removal
+for now.
+
+
+\begin{tabular}{|l|p{12cm}|}
+\hline
+vslID & The unique vsl identifier for this entry.\\
+\hline
+permissions & A serialized object implementing a permissions system (see below).
+Note this only controls read-access (i.e. keys) to the data in the entry.  Write
+access should be controlled via the storage layer. \\
+\hline
+versionEntry &  Each entry is a version header with the following info:
+\begin{itemize}
+	\item vslID of version data
+	\item verionString 
+	\item prevVersionString
+	\item timeStamp
+\end{itemize}\\
+\hline
+\end{tabular}
+
+
+
+\subsubsection{Version (Immutable)}
+
+Versions are serializable objects containing {\em all} the data describing a
+version. 
+
+Note that version data is immutable.  Once written to the system it will never
+be udpated again (though eventually it may be deleted).
+
+It contains the following data:
+
+
+\begin{tabular}{|l|p{12cm}|}
+\hline
+vslID & The unique vsl identifier for this version.\\
+\hline
+versionStringd &  A unique version string, preferably generated from the data
+for the version itself. Note for now we are keeping this seperate from the vslID
+but there may be reasons to have them be the same.\\
+\hline
+prevVersionString & A reference to the version preceeding this one.  To allow merges we might need to allow this to be multivalued.\\
+\hline
+signature & An m5sum of the data encrypted with the version key.  This prohibits tampering by the host peer.\\
+\hline
+permissions & A serialized object implementing a permissions system (see below).\\
+\hline
+chunks & A list of vslIDs reference to the data chunks associated with this version.\\
+\hline
+\end{tabular}
+
+
+\subsubsection{Data Chunk (Immutable)}
+
+Data chunks are also serializable objects encoding the changes associated with
+a version.  Depending on the diff model there may be more than one Data Chunk
+per version and they can be stored in one or more mmap entries (ideally one for
+faster access but we should be flexible).
+
+Data chunks are also immutable.  They will never be updated or replaced though
+some day we may implement some kind of garbage collection.
+
+
+\begin{tabular}{|l|p{12cm}|}
+\hline
+vslID & The unique vsl identifier for this chunk (or list of chunks).\\
+\hline
+signature & An m5sum of the data encrypted with the version key.  This prohibits tampering by the host peer.\\
+\hline
+permissions & A serialized object implementing a permissions system (see below).\\
+\hline
+chunkHeader & An implemenation specific (serializable) object providing chunk metadata.  E.g. if a chunk represents a file chunk then this would contain its location (order) in the chunked file.\\
+\hline
+chunkData & An implementation specific (serializable) object proving chunk data.  This could be e.g. just a chunk of a file or it could be a binary diff.\\
+\hline
+\end{tabular}
+
+
+\subsection{Storage}
+
+The objects above should be fully serializable (including all contained objects).  They are stored in the MMAP by just serializing them and putting them in.
+
+
+\subsection{Structure: A VSL ``Entry''}
+
+A VSL entry corresponds to a particular MMAP entry: the EntryHeader.  The latter
+should hold a completely unodered list of all serialized versionHeader objects.
+The latter can be used to reconstruct the version history.  They define the
+entry in the VSL.  As should be evident they are essnetially write-only and can
+be ``put'' in any order.  
+
+More detailed information about a version can be found by following the vslID of
+the version in the versionHeader.  This entry contains the full version info
+including the list of data chunks and their locations as well as version
+metadata.
+
+Of course the version objects only refer to the actually data which is stored
+elsewhere as DataChunks. A version might either contain a list of MMAP ids
+corresponding to multiple DataChunks or it might contain only one.
+
+
+\section{Object Model}
+
+The object model is a bit more sophisticated than the Data Model but not much.  We use the data assocaited with versions and chunks to create an ``Entry'' but converting an entry into a real piece of data (i.e. a file or whatever) is implementation specific -- the VSL only knows how to store it and version it, not how to reconstruct it.
+
+\subsection{Class List}
+
+\subsubsection{Core Classes}
+
+\begin{itemize}
+	\item VSL - the main class representing the system.
+	\item vslEntry - a class representing a single entry stored in the VSL.
+	\item vslVersion - a class representing a version of an entry.
+	\item vslDataChunk - a class representing an immutable piece of data in the
+		VSL.
+\end{itemize}
+
+\subsubsection{Interfaces}
+
+These are interfaces that the core system interacts with.  Implementations of
+these are necessary for the system to function.
+
+\begin{itemize}
+	\item vslBackEnd - a backend storage layer for the VSL.
+	\item vslBackEndEntry - a piece of data we can store in the backend.  
+	\item vslBackEndEntryMutable - a mutable entry that we can ``put'' to but
+		not delete from.
+	\item vslData - represents a data type that can be stored in a VSL such as a
+		file, an image, a message.  Implementations provide a particular
+		chunking/diffing algorithm.
+\end{itemize}
+
+
+
+\subsection{Classes}
+
+\subsubsection{VSL}
+
+This is the central VSL object.
+
+\paragraph{vslBackend}
+
+An instance of a VSL backend such as a local MMAP or a P2P wrapper.
+
+\paragraph{Entries}
+
+A list of entries that this VSL knows about.  They can exist in various states of synchronization.  
+
+\paragraph{Future add(Entry)}
+
+Create a new entry in storage backend and return an ID.  We return a Future to allow for asychronous writing.
+
+\paragraph{Future update(Entry)}
+
+\paragraph{Future get(id)}
+
+
+
+
+\section{Use Case Pseudocode}
+
+
+\subsection{Add New File}
+
+Lets do a new file use-case, ignoring for now issues of authentication and
+additional data.
+
+INPUT: file\\
+OUTPUT: entryID\\
+
+\begin{verbatim}
+fileData = new vslFileData(filename)
+{
+	chunk file data;
+	new Chunk {
+		header: order, hash, length, begintoken, endtoken, timestamp	
+		data: chunk data
+	}
+	set chunks[];
+}
+entry = new vslEntry.new(filedata);
+{
+	version = new vslVersion(filedata.chunks[])
+	{
+		set prevVersion = null;
+		/* note this unique version string is not the VSL ID */
+		gen new version string;
+	}
+	header = new vslEntryHeader(version)
+	{
+		versionList.add(version);
+	}
+}
+entry.store()
+{
+	versions.create()
+	{
+		chunkIds[] = chunks.create();
+		store chunkIds;
+		store version data: versionstring, chunkIds[], timestamp.
+		return versionID;
+	}
+	header.create( )
+	{
+		 store header data: versionList, fileName;
+		 return headerID;
+	}
+	set headerID;
+	return headerID;
+}
+\end{verbatim}
+
+
+
+\subsection{Get File}
+
+Here we retreive a file from the system.
+
+INPUT: entryID\\
+OUTPUT: file\\
+
+\begin{verbatim}
+entry = new vslEntry(entryID);
+entry.loadHeader();
+vtree = entry.buildVersionTree();
+if (vtree.head().length() == 1)
+{
+	vslEntry.getVersion(vtree.head());
+	{
+		version = new Version(vtree.head().vslID());
+		version.load()
+		{
+			/* read version entry from storage */
+			version.header = version.getVersionHeader();
+			/* read the data associated with all the chunks */
+			foreach(chunk = version.header.chunk[])
+			{
+				chunk.load();
+			}
+		}
+	}
+	file = new FileData(version)
+	{
+		// read chunks out of version and build a file out of them
+	}
+	return file;
+}
+\end{verbatim}
+
+\section{Issues}
+
+Although this section promises to grow without bound lets keep a running list of issues with the design so we can keep are sanity while trying to move forward.
+
+\subsection{Read performance}
+
+There are several conflicting factors affecting read performance.  Ideally we want to read off as little data as we need for each update but this causes several problems.   If we store all the data in as few MMAP entries as possible we save on the number of get's but we pay for it by downloading unnecessary data so looks like we need to store, e.g. chunks, seperately.  Ideally we could implement some kind of locallity in the name scheme.
+
+\subsection{Chuking vs Diffing (or the needly for caching)}
+
+A significant benefit of chunking, etc... is not just data integrity but reducing network usage as in principle we should only need to download new versions of the data.  But this can cause problems that a particular implementation will have to overcome.  If I have a local file how that is being stored updated and stored in the VSL how do I generate a new version.  I either need a local copy of the last version (to diff against), or I need to redownload the latter.  This is where chunking has a large advantage over diffing.  The only way to make diffing equally efficient is to keep a local cache of the last version and the version history and this becomes quite storage inefficient.
+
+
+
+\end{document}
