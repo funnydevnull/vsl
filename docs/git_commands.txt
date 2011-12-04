@@ -38,8 +38,21 @@ Dealing with a merge
 --------------------
 
 
+Pulling
+-------
+
+Alternately to fetch/merge above we can just pull that does it all in one go:
+
+git pull vsl
+
+
 Pushing Updates
 ===============
+
+Just run
+
+git push
+
 
 
 Viewing/Diffing
