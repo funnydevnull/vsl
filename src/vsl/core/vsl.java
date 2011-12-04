@@ -1,4 +1,4 @@
-package net.vsl;
+package vsl.core;
 
 import java.util.List;
 
