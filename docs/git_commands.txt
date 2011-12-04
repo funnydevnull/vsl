@@ -1,0 +1,80 @@
+Here are some basic git commands to work with repo.  
+
+Refs
+====
+
+http://help.github.com/remotes/
+http://help.github.com/remove-sensitive-data/
+
+
+Getting Started
+===============
+
+We start by cloning the repository:
+
+git clone git@github.com:funnydevnull/vsl.git
+
+This creates a local copy which is referred to as "origin".
+
+We can/should also add it to our list of remotes so that we can work with it.  
+
+git remote add vsl git://github.com/funnydevnull/vsl.git
+
+
+Updating
+========
+
+To update local copy from remove _without_ automatically merging we use fetch:
+
+git fetch vsl
+
+Afterwards try 
+
+git hist --all
+
+to see the status of things.
+
+Dealing with a merge
+--------------------
+
+
+Pushing Updates
+===============
+
+
+Viewing/Diffing
+===============
+
+A useful history command:
+
+git hist --all
+
+
+%%%%%%%%
+% NOTES
+%%%%%%%%
+
+Removing Staged
+===============
+
+Removing files accidentally added to index:
+
+git rm --cached FILE
+git reset HEAD <file>
+
+
+Ignoring Files
+==============
+
+To ignore files (e.g. when adding whole directories) add the following lines to ~/.gitconfig:
+
+excludesfile = /home/<user>/.gitignore
+
+and then create a .gitingore file with content e.g.:
+
+*.sw?
+*~
+
+The above ignores e.g. vim swap files and files ending in "~" (temp files used by e.g. gedit).
+
+
