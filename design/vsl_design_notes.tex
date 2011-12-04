@@ -1,6 +1,6 @@
 \documentclass[10pt]{article}
 
-%\nofiles
+\nofiles
 
 \usepackage[dvips]{graphicx}
 \usepackage{epsfig}
@@ -18,11 +18,15 @@
 \usepackage{hyperref}
 \usepackage{amsthm}
 
+% Needs pacakge moreverb.sty.  In ubuntu install tetex-live-extras.
+\usepackage{moreverb}
+
+
 \pagestyle{fancy}
 
 \begin{document}
 \title{VSL Design Notes}
-\author{Sheer El-Showk}
+\author{}
 %\date{06/9/04}
 \maketitle
 
@@ -85,6 +89,7 @@ record version with conflicting operations this is simply treated as a branch
 event.
 
 The Index header stores ownership, etc... info for the index.
+
 \begin{tabular}{|l|p{12cm}|}
 \hline
 vslID & The unique vsl identifier for this entry.\\
@@ -97,7 +102,9 @@ access should be controlled via the storage layer. \\
 
 
 The index's data is all stored in a single multi-map address associated with the
-index.  The data is {\em unordered} and each entry is an {\em IndexEntry} object
+index.  The data is {\em unordered} and each entry is an {\em IndexEntry}
+object
+
 \begin{tabular}{|l|p{12cm}|}
 \hline
 indexEntryID & A unique ID generated for this entry. \\
@@ -296,7 +303,7 @@ additional data.
 INPUT: file\\
 OUTPUT: entryID\\
 
-\begin{verbatim}
+\begin{verbatimtab}[3]
 fileData = new vslFileData(filename)
 {
 	chunk file data;
@@ -336,7 +343,7 @@ entry.store()
 	set headerID;
 	return headerID;
 }
-\end{verbatim}
+\end{verbatimtab}
 
 
 
@@ -347,7 +354,7 @@ Here we retreive a file from the system.
 INPUT: entryID\\
 OUTPUT: file\\
 
-\begin{verbatim}
+\begin{verbatimtab}[3]
 entry = new vslEntry(entryID);
 entry.loadHeader();
 vtree = entry.buildVersionTree();
@@ -373,7 +380,7 @@ if (vtree.head().length() == 1)
 	}
 	return file;
 }
-\end{verbatim}
+\end{verbatimtab}
 
 \section{Issues}
 
