@@ -1,5 +1,7 @@
 package vsl.core;
 
+import java.io.Serializable;
+
 public class vslBackendEntry implements Serializable {
 
 	/* the ID of this entry in the backend */
@@ -16,22 +18,22 @@ public class vslBackendEntry implements Serializable {
 
 	public Boolean isCreated()
 	{
-
+		return false;
 	}
 
 	public Boolean isLoaded()
 	{
-
+		return false;
 	}
 
 	public vslFuture create()
 	{
-
+		return null;
 	}
 
 	public vslFuture load()
 	{
-
+		return null;
 	}
 
 }

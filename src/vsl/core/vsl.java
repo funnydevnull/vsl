@@ -1,18 +1,23 @@
 package vsl.core;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import vsl.backends.vslMMBackend;
+
 public class vsl {
-	private vslBackend vslBack;
+	private vslMMBackend vslBack;
 	private List<String> entries;
 	//private Logger log;
 	
 	public vsl() {
 		// constructor
+		vslBack = new vslMMBackend();
+		entries = new ArrayList<String>();
 	}
 	
-	public vslEntry getEntry(String vslID) {
-		return vslBack.getEntry(vslID);
+	public vslFuture getEntry(vslID id) {
+		return vslBack.getEntry(id);
 	}
 }
 

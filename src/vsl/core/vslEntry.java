@@ -8,6 +8,7 @@ public class vslEntry {
 	
 	public vslEntry() {
 		//stub constructor
+		versions.clear();
 	}
 	
 	public String getId() {
