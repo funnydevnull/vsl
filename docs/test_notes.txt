@@ -1,0 +1,17 @@
+To run/compile test classes:
+
+From vsl/src dir:
+
+javac vsl/test/SerializingTest.java
+
+To run it:
+
+java vsl.test.SerializingTest put mykey myval
+java vsl.test.SerializingTest put mykey2 myval2
+
+then 
+
+java vsl.test.SerializingTest read 
+
+
+
