@@ -5,6 +5,7 @@ Refs
 
 http://help.github.com/remotes/
 http://help.github.com/remove-sensitive-data/
+http://tomayko.com/writings/the-thing-about-git  (nice explanation/review of the index)
 
 
 Getting Started
@@ -61,6 +62,19 @@ Viewing/Diffing
 A useful history command:
 
 git hist --all
+
+
+Using the Index
+===============
+
+$ git diff
+[diff of changes in working copy that are not in the staging area]
+
+$ git diff --cached
+[diff of changes in staging area]
+
+$git add --patch <file>
+[prompts to stage file modified line by line]
 
 
 %%%%%%%%
