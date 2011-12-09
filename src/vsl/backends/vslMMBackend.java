@@ -1,12 +1,13 @@
 package vsl.backends;
 
 // vsl packages
-import vsl.core.vslBackend;
-import vsl.core.vslID;
-
-// other packages 
 import org.apache.commons.collections.MultiHashMap;
 import org.apache.commons.collections.MultiMap;
+
+import vsl.core.vslBackend;
+import vsl.core.vslBackendEntry;
+import vsl.core.vslFuture;
+import vsl.core.vslID;
 
 
 public class vslMMBackend implements vslBackend {
@@ -24,6 +25,7 @@ public class vslMMBackend implements vslBackend {
 	 */
 	public vslFuture create(vslBackendEntry entry) {
 		//implement
+		return null;
 	}
 
 	/**
@@ -34,6 +36,7 @@ public class vslMMBackend implements vslBackend {
 	 */
 	public vslFuture add(vslID id, vslBackendEntry entry) {
 		//implement
+		return null;
 	}
 
 	/**
@@ -43,6 +46,7 @@ public class vslMMBackend implements vslBackend {
 	 */
 	public vslFuture getEntry(vslID id) {
 		//implement
+		return null;
 	}
 
 }
