@@ -1,5 +1,8 @@
 To run/compile test classes:
 
+SerializingTest:
+================
+
 From vsl/src dir:
 
 javac vsl/test/SerializingTest.java
@@ -13,5 +16,22 @@ then
 
 java vsl.test.SerializingTest read 
 
+If we use MultiValueMap from apache need to include classpath:
+
+javac -cp .:../lib/commons-collections-3.2.1.jar  vsl/test/SerializingTest.java 
 
 
+FileChunkingTest
+================
+
+To run cd to vsl/src and execute as below.
+
+Chunk a file (in this case vsl_deisng_notes-1.tex) and store in file mydb:
+
+java vsl.test.FileChunkingTest create mydb  ../test/input/version/vsl_design_notes-1.tex
+
+NOTE: chunking params currently hard-coded.  Should make them args.
+
+To see the chunked files in a DB:
+
+java vsl.test.FileChunkingTest list mydb
