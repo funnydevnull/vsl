@@ -1,5 +1,7 @@
 package vsl.test;
 
+//import vsl.test.MMStore;
+
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -15,7 +17,7 @@ import java.util.Iterator;
 public class SerializingTest
 {
 
-	private static HashMap map;
+	private static MMStore map;
 	private static Date lastUpdate;
 
 	private static String mapFile = "mymap";
@@ -27,7 +29,9 @@ public class SerializingTest
 			if (args[0].equals("read"))
 			{
 				try{
-					readMap();
+					map = MMStore.readMap(mapFile);
+					//System.out.println("Read in map of size: " + map.totalSize());
+					System.out.println("Read in map of size: " + map.size());
 					Iterator iter = map.keySet().iterator();
 					while(iter.hasNext())
 					{
@@ -45,11 +49,12 @@ public class SerializingTest
 			{
 				System.out.println("Reading hashtable from file: " + mapFile);
 				try{
-					readMap();
+					map = MMStore.readMap(mapFile);
+					//readMap();
 				} catch (FileNotFoundException e)
 				{
 					System.out.println("File not found, will create new file.");
-					map = new HashMap();
+					map = new MMStore(mapFile);
 				}
 				catch (Exception e) {
 					System.err.println("Caught exception: " + e.toString());
@@ -59,7 +64,8 @@ public class SerializingTest
 						+ "]-->[" + args[2] +"]");
 				map.put(args[1], args[2]);
 				try{
-					writeMap();
+					map.writeMap();
+					System.out.println("Map has " + map.size() + " entries");
 				} catch (IOException e) {
 					System.err.println("Caught exception: " + e.toString());
 				}
@@ -77,6 +83,8 @@ public class SerializingTest
 		}
 
 	}
+
+	/*
 
 	public static void readMap()
 		throws IOException, ClassNotFoundException
@@ -99,5 +107,6 @@ public class SerializingTest
 
 		oos.close();
 	}
+	*/
 
 }
