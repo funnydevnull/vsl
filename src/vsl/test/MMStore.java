@@ -1,8 +1,6 @@
 package vsl.test;
 
-import vsl.util.DebuggingObjectOutputStream;
-
-import vsl.util.DebuggingObjectOutputStream;
+//import vsl.util.DebuggingObjectOutputStream;
 
 import org.apache.commons.collections.map.MultiValueMap;
 
