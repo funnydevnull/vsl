@@ -15,6 +15,8 @@ import java.io.BufferedInputStream;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.StringTokenizer;
+import java.util.HashMap;
+import java.util.Collections;
 
 public class FileChunkingTest {
 
@@ -29,40 +31,44 @@ public class FileChunkingTest {
 	private static String source;
 	private static String dbfile;
 
+	private final static HashMap cmds = new HashMap();
 
+
+	public static void init()
+	{
+		cmds.put("create", new Integer(1));
+		cmds.put("list", new Integer(2));
+		cmds.put("compare", new Integer(3));
+		cmds.put("reconstruct", new Integer(4));
+	}
 
 	public static void main(String[] args)
 	{
+		init();
 		if (args.length < 2)
 		{
 			System.err.println("Expected args: <cmd> <dbfile> ....\n"+
 							"\t cmd = create, compare, list, read");
 			System.exit(1);
 		}
-		cmd = args[0];
+		cmd = args[0].toLowerCase();
 		dbfile = args[1];
-		if (cmd.equals("create"))
+		Integer cmdint = (Integer) cmds.get(cmd);
+		switch(cmdint)
 		{
-			if (args.length < 3)
-			{
-				System.err.println("Missings args: create <dbfile> <source>");
-				System.exit(1);
-			}
-			source = args[2];
-			create();
-			System.exit(0);
-		} 
-		if (cmd.equals("list"))
-		{
-			list();
-			System.exit(0);
-		}
+			case 1:			create(args); 			break;
+			case 2:			list();					break;
+			case 3:			unimplemented();		break;
+			case 4:			reconstruct(args);		break;
 
-		if (cmd.equals("compare"))
-		{
-			//compare();
-			System.exit(0);
-		} 
+		}
+		System.exit(0);
+	}
+
+	public static void unimplemented()
+	{
+		System.err.println("Command '" + cmd + "' not yet implemented.");
+		System.exit(1);
 	}
 
 	public static void list()
@@ -87,8 +93,14 @@ public class FileChunkingTest {
 	}
 
 
-	public static void create()
+	public static void create(String[] args)
 	{
+		if (args.length < 3)
+		{
+			System.err.println("Missings args: create <dbfile> <source>");
+			System.exit(1);
+		}
+		source = args[2];
 		BufferedInputStream fl;
 		try {
 			try {
@@ -113,6 +125,65 @@ public class FileChunkingTest {
 		}
 	}
 
+	public static void reconstruct(String[] args)
+	{
+		FileOutputStream fl = null;
+	 	BufferedOutputStream bf = null;
+		if (args.length < 4)
+		{
+			System.err.println("Missings args: reconstruct <dbfile> <dbentry> <output_file>");
+			System.exit(1);
+		}
+		source = args[2];
+		String outfile = args[3];
+		try {
+			fl = new FileOutputStream(outfile);
+			bf = new BufferedOutputStream(fl);
+		}
+		catch(FileNotFoundException e)
+		{
+			System.err.println("Cannot write to file '" + outfile + "'");
+			System.err.println("Excption: " + e.toString());
+			System.exit(1);
+		}
+		try {
+			try {
+				db = MMStore.readMap(dbfile);
+			} catch (FileNotFoundException e) {
+				System.err.println("Database " + dbfile + " does not exist. Exiting.");
+				System.exit(1);
+			}
+			chunks = (Vector<vslFileDataChunk>) db.get(source);
+			if (chunks == null)
+			{
+				System.err.println("No entry corresponding to '" + source 
+						+ "' found in dbfile '" + dbfile + "'. Exiting.");
+				System.exit(1);
+			}
+			unchunk(bf, chunks);
+			bf.flush();
+			fl.close();
+		} catch (Exception e) {
+			System.err.println("Caught exception: " + e.toString());
+			System.exit(1);
+		}
+	}
+
+
+	public static void unchunk(BufferedOutputStream bf, Vector<vslFileDataChunk> chunks)
+	{
+		Collections.sort(chunks);
+		for(vslFileDataChunk chunk: chunks)
+		{
+			try {
+				byte[] data = chunk.getData();
+				bf.write(data, 0, data.length);
+			} catch (IOException e) {
+				System.out.println("Caught excption chunking: " + e.toString());
+			}
+		}
+	}
+
 	public static Vector<vslFileDataChunk> chunk(BufferedInputStream bf)
 	{
 		Vector<vslFileDataChunk> ch = new Vector<vslFileDataChunk>();
@@ -124,7 +195,7 @@ public class FileChunkingTest {
 		while (read == chunkSize)
 		{
 			vslFileDataChunk chunk;
-			try{
+			try {
 				read = bf.read(tmp, 0, chunkSize);
 				chunk =  new vslFileDataChunk(chunkNum++, read, tokenSize, tmp);
 				chunk.setData(read, tmp);

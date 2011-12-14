@@ -4,8 +4,9 @@ import vsl.core.vslDate;
 import vsl.core.vslID;
 
 import java.io.Serializable;
+import java.security.MessageDigest;
 
-public class vslFileDataChunk implements Serializable
+public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChunk>
 	//extends vslDataChunk
 {
 
@@ -44,6 +45,11 @@ public class vslFileDataChunk implements Serializable
 		setTokens();
 	}
 
+
+	public int compareTo(vslFileDataChunk other)
+	{
+		return this.chunkNum - other.getChunkNum();
+	}
 
 	/* beyond here trivial getters/setters */
 
@@ -84,7 +90,17 @@ public class vslFileDataChunk implements Serializable
 		}
 	}
 
-	
+/*
+	private byte[] genMD5()
+	{
+		MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+		//digest.update(chunkData);
+		//byte[] hash = digest.digest();
+		//return hash;
+		return digest.digest(chunkData);
+	}
+*/
+
 	public byte[] getBeginToken()
 	{
 		return beginToken;
@@ -100,4 +116,13 @@ public class vslFileDataChunk implements Serializable
 		return chunkSize;
 	}
 
+	public int getChunkNum()
+	{
+		return chunkNum;
+	}
+
+	public byte[] getData()
+	{
+		return chunkData;
+	}
 }

@@ -35,3 +35,7 @@ NOTE: chunking params currently hard-coded.  Should make them args.
 To see the chunked files in a DB:
 
 java vsl.test.FileChunkingTest list mydb
+
+To rebuild a chunked file and put it in "outputfile" use:
+
+java vsl.test.FileChunkingTest reconstruct mydb vsl_design_notes-1.tex outputfile
