@@ -18,13 +18,26 @@ import java.util.StringTokenizer;
 import java.util.HashMap;
 import java.util.Collections;
 
+
+/**
+ * A test class for prototyping file chunking.  Work in progress....
+ *
+ * TODO:
+ * - Seperate out cmdline logic from chunking backend. 
+ *   ==> chunking code should go to vslFileHandler.
+ * - Move generic methods to vslFileHandler and call them from here.
+ *   - chunkFile
+ *   - unchunk
+ *   - compare
+ *  - After re-writing this class should mostly have "UI" logic-- part cmd line
+ *    args and call backend.
+ */
 public class FileChunkingTest {
 
 	//private static int chunkSize = 100*1000;
 	//private static int tokenSize = 1000;
 	private static int chunkSize = 10*1000;
 	private static int tokenSize = 1000;
-	private static Vector<vslFileDataChunk> chunks;
 	private static MMStore db;
 
 	private static String cmd;
@@ -65,12 +78,23 @@ public class FileChunkingTest {
 		System.exit(0);
 	}
 
+
+	/* --------------- UI METHODS ------------------- */
+
+
+	/**
+	 * methods called to implement UI requests.
+	 */
+
 	public static void unimplemented()
 	{
 		System.err.println("Command '" + cmd + "' not yet implemented.");
 		System.exit(1);
 	}
 
+	/**
+	 * List content of db file.
+	 */
 	public static void list()
 	{
 		try {
@@ -92,16 +116,19 @@ public class FileChunkingTest {
 		}
 	}
 
-
+	
+	/**
+	 * Populate db entry from a file passed as second arg.
+	 */
 	public static void create(String[] args)
 	{
+		Vector<vslFileDataChunk> chunks = null;
 		if (args.length < 3)
 		{
 			System.err.println("Missings args: create <dbfile> <source>");
 			System.exit(1);
 		}
 		source = args[2];
-		BufferedInputStream fl;
 		try {
 			try {
 				db = MMStore.readMap(dbfile);
@@ -109,8 +136,7 @@ public class FileChunkingTest {
 				System.out.println("File " + dbfile + " does not exist.  Will create.");
 				db = new MMStore(dbfile);
 			}
-			fl = new BufferedInputStream(new FileInputStream(source));
-			chunks = chunk(fl);
+			chunks = chunkFile(source);
 			StringTokenizer st = new StringTokenizer(source, "/");
 			String fname = "UNSET";
 			while (st.hasMoreTokens()) {
@@ -125,8 +151,12 @@ public class FileChunkingTest {
 		}
 	}
 
+	/**
+	 * Dump db entry to a file passed as third cmd line arg.
+	 */
 	public static void reconstruct(String[] args)
 	{
+		Vector<vslFileDataChunk> chunks = null;
 		FileOutputStream fl = null;
 	 	BufferedOutputStream bf = null;
 		if (args.length < 4)
@@ -169,7 +199,70 @@ public class FileChunkingTest {
 		}
 	}
 
+	/**
+	 *  read off args and compare a file in DB with a new version passed as just 
+	 *  a filename.
+	 *
+	 *  TODO:
+	 *  - write comparison code
+	 *  - Split method: read args + input/chunk file
+	 *  				compare chunks in a seperate method
+	 */
+	public static void compare(String[] args)
+	{
+		Vector<vslFileDataChunk> oldChunks = null;
+		Vector<vslFileDataChunk> newChunks = null;
+		if (args.length < 4)
+		{
+			System.err.println("Missings args: compare <dbfile> <dbentry> <new_version>");
+			System.exit(1);
+		}
+		source = args[2];
+		String newver = args[3];
+		try {
+			newChunks = chunkFile(newver);	
+		}
+		catch(FileNotFoundException e)
+		{
+			System.err.println("Cannot read from file '" + newver + "'");
+			System.err.println("Excption: " + e.toString());
+			System.exit(1);
+		}
+		try {
+			try {
+				db = MMStore.readMap(dbfile);
+			} catch (FileNotFoundException e) {
+				System.err.println("Database " + dbfile + " does not exist. Exiting.");
+				System.exit(1);
+			}
+			oldChunks = (Vector<vslFileDataChunk>) db.get(source);
+			if (oldChunks == null)
+			{
+				System.err.println("No entry corresponding to '" + source 
+						+ "' found in dbfile '" + dbfile + "'. Exiting.");
+				System.exit(1);
+			}
+			System.out.println("old chunks: " + oldChunks);
+		} catch (Exception e) {
+			System.err.println("Caught exception: " + e.toString());
+			System.exit(1);
+		}
+	}
 
+
+
+
+	/* ------------------ FileChunking methods ------------------------*/
+
+	/**
+	 * These methods should eventually be moved to the vslFileHander as well as some
+	 * of the internal logic of the methods above.
+	 */
+
+
+	/**
+	 * Recoonstruct a file from its chunks and dump them in the output stream bf.
+	 */
 	public static void unchunk(BufferedOutputStream bf, Vector<vslFileDataChunk> chunks)
 	{
 		Collections.sort(chunks);
@@ -184,8 +277,14 @@ public class FileChunkingTest {
 		}
 	}
 
-	public static Vector<vslFileDataChunk> chunk(BufferedInputStream bf)
+	/**
+	 * Chunk the named file using the chunklength and tokenlength defined as static
+	 * fields in this class.
+	 */
+	public static Vector<vslFileDataChunk> chunkFile(String filename)
+		throws FileNotFoundException
 	{
+		BufferedInputStream bf = new BufferedInputStream(new FileInputStream(filename));
 		Vector<vslFileDataChunk> ch = new Vector<vslFileDataChunk>();
 		int read = chunkSize;
 		int chunkNum = 0;
@@ -199,7 +298,51 @@ public class FileChunkingTest {
 				read = bf.read(tmp, 0, chunkSize);
 				chunk =  new vslFileDataChunk(chunkNum++, read, tokenSize, tmp);
 				chunk.setData(read, tmp);
-				System.out.println("Got chunk [" + chunkNum + "];  size: " + chunk.getLength());
+				System.out.println("Got chunk [" + chunkNum + "];  size: " 
+									+ chunk.getLength() + ", digest: ["
+									+ new String(chunk.getDigest()) + "]");
+				String bt = new String(chunk.getBeginToken());
+				String et = new String(chunk.getEndToken());
+				System.out.println("beginToken: " + bt);
+				System.out.println("endToken: " + et  + "\n=====================");
+				ch.add(chunk);
+			} catch (IOException e) {
+				System.out.println("Caught excption chunking: " + e.toString());
+			}
+		}
+		return ch;
+	}
+
+	/**
+	 * IMPLEMENTATION INCOMPLETE!!
+	 *
+	 * Chunk a file in a way that tries to maximize the overlap with an old chunking
+	 * by using the tokens on those chunks to try to define our new chunks.
+	 *
+	 *
+	 * NOTE: Still UNIMPLEMENTED
+	 */
+	public static Vector<vslFileDataChunk> reChunkFile(String filename, 
+												Vector<vslFileDataChunk> oldChunks)
+		throws FileNotFoundException
+	{
+		BufferedInputStream bf = new BufferedInputStream(new FileInputStream(filename));
+		Vector<vslFileDataChunk> ch = new Vector<vslFileDataChunk>();
+		int read = chunkSize;
+		int chunkNum = 0;
+		byte[] tmp = new byte[chunkSize];
+		/* we keep reading so long as we get back chunkSizes, 
+		 * after that the file is done.*/
+		while (read == chunkSize)
+		{
+			vslFileDataChunk chunk;
+			try {
+				read = bf.read(tmp, 0, chunkSize);
+				chunk =  new vslFileDataChunk(chunkNum++, read, tokenSize, tmp);
+				chunk.setData(read, tmp);
+				System.out.println("Got chunk [" + chunkNum + "];  size: " 
+									+ chunk.getLength() + ", digest: ["
+									+ new String(chunk.getDigest()) + "]");
 				String bt = new String(chunk.getBeginToken());
 				String et = new String(chunk.getEndToken());
 				System.out.println("beginToken: " + bt);

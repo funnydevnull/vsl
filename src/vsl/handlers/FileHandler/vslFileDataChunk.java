@@ -5,6 +5,8 @@ import vsl.core.vslID;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 
 public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChunk>
 	//extends vslDataChunk
@@ -18,6 +20,7 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 
 	private byte[] chunkData;
 
+	private byte[] chunkDigest;
 
 	private byte[] beginToken;
 	private byte[] endToken;
@@ -70,9 +73,11 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 		}
 		chunkData = new byte[len];
 		System.arraycopy(data, 0, chunkData,  0, len);
+		genDigest();
 		return 0;
 	}
 
+	/* ----------------- PRIVATE -------------------- */
 
 	private void setTokens()
 	{
@@ -90,16 +95,21 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 		}
 	}
 
-/*
-	private byte[] genMD5()
+	private void genDigest()
 	{
-		MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
-		//digest.update(chunkData);
-		//byte[] hash = digest.digest();
-		//return hash;
-		return digest.digest(chunkData);
+		try {
+			MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+			//digest.update(chunkData);
+			//byte[] hash = digest.digest();
+			//return hash;
+			chunkDigest = digest.digest(chunkData);
+		} catch (NoSuchAlgorithmException e) {
+			// Log error!!
+			System.err.println("vslFileDataChunk: " + e.toString());
+		}
 	}
-*/
+
+	/* ----------------- GETTERS/SETTERS -------------------- */
 
 	public byte[] getBeginToken()
 	{
@@ -125,4 +135,11 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 	{
 		return chunkData;
 	}
+	
+	public byte[] getDigest()
+	{
+		return chunkDigest;
+	}
+	
+
 }
