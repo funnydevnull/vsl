@@ -56,7 +56,13 @@ This document is intended to accompany and clarify the data model and UML files 
 
 \paragraph{Diff model} 
 
-We support flexible diff models ... e.g. binary diffing, data chunking, etc...  The VSL is diff model neutral with the diff-model specific data (e.g. chunk number, etc...) stored in a implementation-specific Data Chunk Header.
+We support flexible diff models ... e.g. binary diffing, data chunking, etc...
+The VSL is diff model neutral with the diff-model specific data (e.g. chunk
+number, etc...) stored in a implementation-specific Data Chunk Header.\\
+UPDATE: while the above is still somewhat true we will actually favor a chunking
+model since a diff model would require a local fair amount of local statefulless
+to track updates to the file.  With chunks we can just get the md5sum of each
+chunk in the backend and compare that with local chunking.
 
 \paragraph{Auth/Perm model}
 
@@ -73,22 +79,40 @@ All data in the VSL should be signed to avoid tampering.  The signature is usual
 The data model is built around two immutable objects, a {\em version} and a {\em
 data chunk}, as well as a mutable object, the {\em EntryHeader}.  Although the latter
 can be modified we only allow ``puts'' not ``pops'' so data integrity is never
-an issue.
+an issue.  Finally a special data type, an {\em Index}, is used to store data that
+is subject to many small and frequent modification (e.g. an index of messages or
+even a directory) for which complicated version would entail too much overhead.
 
 \subsubsection{Index}
 
 An index is essentially any ``put-mostly'' list.  While we could implement this
 as a special kind of file we do not because indices are accessed differently.
 They are subject to many small and frequent changes and creating new versions
-for each modification does not seem efficient.  Thus an index is stored
-essentially as a version tree.  Data is simply put into the relevant backend
-entry along with a unique identifier and a version number.  To update or delete
-data from an index a new record is added updating the status of an older record
-(along with the relevant version number).  If two entries refer to the same
-record version with conflicting operations this is simply treated as a branch
-event.
+for each modification does not seem efficient.  So instead the index is a single
+MMap entry which contains all its own version hisotry and is immune to write
+conflicts.  
 
-The Index header stores ownership, etc... info for the index.
+Basically an index is stored as a version tree.  Data is simply put into the
+relevant backend entry along with a unique identifier and a version number.  To
+update or delete data from an index a new record is added updating the status of
+an older record (along with the relevant version number).  If two entries refer
+to the same record version with conflicting operations this is simply treated as
+a branch event.
+
+Note there are two notions of versioning built into an index.  The first is
+associated with each entry.  Every entry that is added gets an {\em
+indexEntryID} and updates to that entry must refer to the previous version of
+the entry they're updating.  To maintaime some sychronized notion of a timeline
+however there is another indexVersionID that spans multiple entries.  Thus when
+updating an entry in an index the user must provide both the ID of the last
+version of the entry to be updated and the ID of the latest entry in this index
+(even if the latter is not the entry that is being updated).  This allows us to
+track when two users modify different entries at the same time (which is usually
+fine but we may still wanna track it).
+
+The Index header stores ownership, etc... info for the index.  Having such an
+object requires {\em two} backend queries to get the index so if its not useful
+we may eventually drop it.\\
 
 \begin{tabular}{|l|p{12cm}|}
 \hline
@@ -99,27 +123,32 @@ Note this only controls read-access (i.e. keys) to the data in the entry.  Write
 access should be controlled via the storage layer. \\
 \hline
 \end{tabular}
-
-
-The index's data is all stored in a single multi-map address associated with the
+\\
+\\
+\noindent The index's data is all stored in a single multi-map address associated with the
 index.  The data is {\em unordered} and each entry is an {\em IndexEntry}
-object
+object\\
 
 \begin{tabular}{|l|p{12cm}|}
 \hline
 indexEntryID & A unique ID generated for this entry. \\
 \hline
+prevEntryID & A reference to any older version of the same object in this index
+list.  If this is NULL then we're adding a new object.  If it is not null then
+this entry represents an update.\\
+\hline
+versionID & A unique ID generated for the new ``version'' or state of the index
+represented by adding this entry.\\
+\hline 
+prevVersionID & A reference to the previous ``version'' of this index that this
+entry was supposed to be a modification of.  We keep track of this to get some
+kind of a ``snapshot'' of the index.\\
+\hline
 permissions & A serialized object implementing a permissions system (see below).
 Note this only controls read-access (i.e. keys) to the data in the entry.  Write
 access should be controlled via the storage layer. \\
 \hline
-versionEntry &  Each entry is a version header with the following info:
-\begin{itemize}
-	\item vslID of version data
-	\item verionString 
-	\item prevVersionString
-	\item timeStamp
-\end{itemize}\\
+indexEntryData &  The actual data associated with this index entry.\\
 \hline
 \end{tabular}
 
