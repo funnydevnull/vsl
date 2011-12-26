@@ -39,3 +39,28 @@ java vsl.test.FileChunkingTest list mydb
 To rebuild a chunked file and put it in "outputfile" use:
 
 java vsl.test.FileChunkingTest reconstruct mydb vsl_design_notes-1.tex outputfile
+
+
+TestCore1
+=========
+
+Basic test of core functionality.
+
+To run try (last two args optional):
+
+java vsl.test.TestCore1 store <filename> [data_string] [numChunks]
+
+Example: 
+
+java vsl.test.TestCore1 store vslDB howdy 12
+
+will generate an Entry with one Version and numChunks data chunks (there's a
+default value) and store them in a vslMMBackend which stores itself to
+filename.  NOTE: will OVERWRITE file at <filename>!!
+
+To read back in and print out the file:
+
+java vsl.test.TestCore1 read <filename> 
+
+
+

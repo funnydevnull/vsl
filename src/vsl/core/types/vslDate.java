@@ -1,4 +1,4 @@
-package vsl.core;
+package vsl.core.types;
 
 import java.util.Date;
 
