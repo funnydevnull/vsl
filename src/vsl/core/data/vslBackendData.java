@@ -16,6 +16,8 @@ import java.io.Serializable;
  *
  */
 public class vslBackendData implements Serializable {
-	
+	// test casting back to vslBackendData from e.g. vslChunk and make sure
+	// versionNum is still around
+	public static final int versionNum=0;
 }
 
