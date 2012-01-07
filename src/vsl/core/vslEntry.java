@@ -27,6 +27,7 @@ public class vslEntry {
 	public vslEntry(vslID entryID) 
 		throws vslStorageException
 	{
+	    //System.out.println("in vslEntry constructor");
 		id = entryID;
 		load();
 	}
@@ -49,7 +50,18 @@ public class vslEntry {
 	void load()
 		throws vslStorageException
 	{
-
+	    System.out.println("in vslEntry.load()");
+	    Vector temp = null;
+	    vslFuture res = vsl.load(id);
+	    if (!res.success()) {
+		    // failed to load id, raise exception?
+		//System.out.println("failed to load id " + id);
+		return;
+	    }		
+	    if(res.awaitUninterruptedly()) {	      
+		temp = res.getEntries();
+	    }	    
+	    System.out.println(temp.size());
 	}
 
 
