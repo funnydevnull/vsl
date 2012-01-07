@@ -135,8 +135,8 @@ public class TestCore1  {
 			chunk.setDataExtra(extra);
 			data.addChunk(chunk);
 			}*/
-		vslID entryID = new vslID();
-		entryID.setID(args[2]);
+		vslID entryID = db.getKey(args[2]);
+		//entryID.setID(args[2]);
 		myVsl.updateEntry(entryID, data);
 		//myVsl.debugShow();
 		//myVsl.save();

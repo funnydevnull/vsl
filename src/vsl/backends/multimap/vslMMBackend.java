@@ -219,6 +219,19 @@ public class vslMMBackend implements vslBackend, Serializable {
 		oos.close();
 	}
 
+	public vslID getKey(String key) {
+		// returns the vslID object associated with the given key.
+		// this is to get around issues where string id matching isn't equivalent to 
+		// the object as a key.  We may want to make it part of the implementation
+		// or make keys a basic data type (e.g. strings)
+		for (vslID dbID: storage.keySet()) {
+			if (dbID.getID() == key) {
+				return dbID;
+			}
+		}
+		return null;
+	}
+
 	public void printMap()
 	{
 		System.out.println("Size: " + storage.keySet().size());
