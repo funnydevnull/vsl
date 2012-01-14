@@ -64,3 +64,37 @@ java vsl.test.TestCore1 read <filename>
 
 
 
+ByteHashSpeedTest
+=================
+
+Some test code to determine how to quicly rechunk a file.  
+
+There are two basic test:
+
+java vsl.test.ByteHashSpeedTest testByte <str1> <str2> ...
+
+tests our doubly-linked byte list (ByteDLL) implementation that allows us to
+quickly match a byte sequence to a list of stored byte arrays.
+
+Try for instance:
+
+java vsl.test.ByteHashSpeedTest testByte heya heyb heee hapo yaho
+
+Note: for consistent results the strings should all be the SAME LENGTH (this is
+not a bug as this is the relevant use case when considering file token
+identifiers -- beginTokens).
+
+Another tester tries chunking a file then rechunking it using various
+techniques (hashing chunk identifiers, etc...).  We will add ByteDLL rechunking
+ot it to compare with other techniques.
+
+Call it as:
+
+java vsl.test.ByteHashSpeedTest testRechunk <filename> <chunkSize> <beginTokenSize>
+
+Note: should have beginTokenSize < chunkSize
+
+For instance:
+
+java vsl.test.ByteHashSpeedTest testRechunk test_files/large.pdf 10000 100
+
