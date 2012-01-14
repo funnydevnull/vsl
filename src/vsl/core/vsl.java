@@ -40,7 +40,7 @@ public class vsl {
 		throws vslStorageException
 	{
 		vslEntry entry = new vslEntry(entryId);
-		//System.out.println("updateEntry()");
+		//System.out.println("updateEntry()");	       
 		return entry.getID();
 	}
 

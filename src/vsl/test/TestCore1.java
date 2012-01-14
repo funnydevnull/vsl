@@ -113,7 +113,6 @@ public class TestCore1  {
 		// technically this is incorrect since vsl needs a config file
 	        myVsl = new vsl(args[1]);
 		vslMMBackend db = vslMMBackend.readMap(args[1]);
-		db.printMap();
 		myVsl.setBackend(db);
 		String base = new String(args[3]);
 		int nChunks = 5;
@@ -128,15 +127,17 @@ public class TestCore1  {
 			System.exit(1);			
 		}
 		testDataType data = new testDataType();
-		/*for (int x = 0; x < nChunks; x++) {
+		for (int x = 0; x < nChunks; x++) {
 			String inString = new String(base + new Integer(x));
 			testChunk chunk = new testChunk(inString);
 			testDataExtra extra = new testDataExtra(new String("extra "+new Integer(x)));
 			chunk.setDataExtra(extra);
 			data.addChunk(chunk);
-			}*/
-		vslID entryID = db.getKey(args[2]);
+			}
+		//vslID entryID = db.getKey(args[2]);
 		//entryID.setID(args[2]);
+		vslID entryID = new vslID();
+		entryID.setID(args[2]);
 		myVsl.updateEntry(entryID, data);
 		//myVsl.debugShow();
 		//myVsl.save();

@@ -29,4 +29,9 @@ public class vslID implements Serializable {
 	{
 		return id;
 	}
+
+	@Override
+	public int hashCode() {
+		return id.hashCode();
+	}
 }

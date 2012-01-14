@@ -50,8 +50,8 @@ public class vslEntry {
 	void load()
 		throws vslStorageException
 	{
-	    System.out.println("in vslEntry.load()");
-	    Vector temp = null;
+	    System.out.println("in vslEntry.load() using " + id.hashCode());
+	    Vector temp = null;	   
 	    vslFuture res = vsl.load(id);
 	    if (!res.success()) {
 		    // failed to load id, raise exception?
