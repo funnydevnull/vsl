@@ -40,7 +40,7 @@ public class ByteHashSpeedTest {
 		throws Exception
 	{
 		if (args.length < 1) {
-			System.out.println("Must specify commend: <testByte> or <testRechunk>");
+			System.err.println("Must specify commend: <testByte>, <rechunkSame> or <rechunkDiff>");
 			System.exit(-1);
 		}
 		String[] rest = new String[args.length - 1];
@@ -50,11 +50,14 @@ public class ByteHashSpeedTest {
 		if (args[0].equals("testByte")) {
 			testByteDLL(rest);	
 		}
-		else if (args[0].equals("testRechunk")) {
-			testRechunk(rest);	
+		else if (args[0].equals("rechunkSame")) {
+			rechunkSame(rest);	
+		}
+		else if (args[0].equals("rechunkDiff")) {
+			rechunkDiff(rest);	
 		}
 		else {
-			System.out.println("Must specify commend: <testByte> or <testRechunk>");
+			System.err.println("Must specify commend: <testByte>, <rechunkSame> or <rechunkDiff>");
 			System.exit(-1);
 		}
 	}
@@ -100,7 +103,7 @@ public class ByteHashSpeedTest {
 	}
 
 
-	public static void testRechunk(String[] args)
+	public static void rechunkSame(String[] args)
 		throws Exception
 	{
 		if (args.length < 3)
@@ -149,6 +152,56 @@ public class ByteHashSpeedTest {
 		//reChunk(infile, chunkSize, tokenSize, chunkHashMap);
 		System.out.println("Seventh read: using ByteDLL to match tokens...");
 		reChunkByteDLL(infile, chunkSize, tokenSize, chunkHashMap);
+	}
+
+
+	public static void rechunkDiff(String[] args)
+		throws Exception
+	{
+		if (args.length < 4)
+		{
+			System.err.println("Expected args for [testRechunkDiff]: <file1> <file2> <chunk_size> <token_size>....\n\n"+
+							"\t file1 = name of initial file to chunk.\n" +
+							"\t file2 = name of modified file to compare file1 with.\n" +
+							"\t chunk_size = size of chunks in bytes.\n "+
+							"\t token_size = size of begin tokens in bytes (should be less thank chunk_size). \n\n" +
+							"e.g.  testRechunk myfile myfile_mod 10000 100");
+			System.exit(1);
+		}
+		String origName = args[0];
+		String newName = args[1];
+		int chunkSize = new Integer(args[2]).intValue();
+		int tokenSize = new Integer(args[3]).intValue();
+		File origVer = new File(origName);
+		File newVer = new File(newName);
+		System.out.println("Chunk Size: " + chunkSize);
+		System.out.println("Token Size: " + tokenSize);
+		System.out.println("");
+		System.out.println("======================================");
+		System.out.println("Reading");
+		System.out.println("======================================");
+		System.out.println("First read: Load orig file [" + origName + "] into OS Cache...");
+		chunk(origVer, chunkSize, -1, false, null);
+		System.out.println("Second read: Load orig file [" + newName + "] into OS Cache...");
+		chunk(newVer, chunkSize, -1, false, null);
+		System.out.println("");
+		System.out.println("======================================");
+		System.out.println("Chunking [" + origName + "]");
+		System.out.println("======================================");
+		System.out.println("Third read: storing tokens from original file into hashmap...");
+		//lets pre-size our hashmap to a reasonable size
+		int estChunks = (int) origVer.length()/chunkSize + 10;
+		System.out.println("Presizing hashtable to size: " + estChunks);
+		HashMap<ByteWrapper, byte[]> chunkHashMap = new HashMap<ByteWrapper, byte[]>(estChunks);
+		chunk(origVer, chunkSize, tokenSize, true, chunkHashMap);
+		//System.out.println("Sixth read: searching for matching tokens...");
+		//reChunk(infile, chunkSize, tokenSize, chunkHashMap);
+		System.out.println("");
+		System.out.println("======================================");
+		System.out.println("Rechunking [" + newName + "]");
+		System.out.println("======================================");
+		System.out.println("Fourth read: comparing new version to old using ByteDLL to match tokens...");
+		reChunkByteDLL(newVer, chunkSize, tokenSize, chunkHashMap);
 	}
 
 	/**

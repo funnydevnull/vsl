@@ -67,14 +67,19 @@ java vsl.test.TestCore1 read <filename>
 ByteHashSpeedTest
 =================
 
-Some test code to determine how to quicly rechunk a file.  
+Some test code to determine how to quickly rechunk a file.  
 
-There are two basic test:
+There are three basic commands: <testByte>, <chunkSame>, <chunkDiff>
+
+testByte
+--------
 
 java vsl.test.ByteHashSpeedTest testByte <str1> <str2> ...
 
-tests our doubly-linked byte list (ByteDLL) implementation that allows us to
-quickly match a byte sequence to a list of stored byte arrays.
+Tests our doubly-linked list of bytes (ByteDLL) implementation that allows us
+to quickly match a byte sequence to a list of stored byte arrays.  Note that
+performance is actually mostly due to a prestruct we have in this class that
+vastly speeds up our search.
 
 Try for instance:
 
@@ -82,19 +87,46 @@ java vsl.test.ByteHashSpeedTest testByte heya heyb heee hapo yaho
 
 Note: for consistent results the strings should all be the SAME LENGTH (this is
 not a bug as this is the relevant use case when considering file token
-identifiers -- beginTokens).
+identifiers -- beginTokens). 
+
+Also for efficiency reasons we do very litle error checking but it is assumed
+that both the input strings and the search strings are greater than 3 in
+length.
+
+chunkSame
+---------
 
 Another tester tries chunking a file then rechunking it using various
-techniques (hashing chunk identifiers, etc...).  We will add ByteDLL rechunking
-ot it to compare with other techniques.
+techniques (hashing chunk identifiers, etc...).  This test has a lot of old
+code in it that we probably don't need anymore.  The final rechunking is done
+with our efficient struct.
 
 Call it as:
 
-java vsl.test.ByteHashSpeedTest testRechunk <filename> <chunkSize> <beginTokenSize>
+java vsl.test.ByteHashSpeedTest rechunkSame <filename> <chunkSize> <beginTokenSize>
 
 Note: should have beginTokenSize < chunkSize
 
 For instance:
 
-java vsl.test.ByteHashSpeedTest testRechunk test_files/large.pdf 10000 100
+java vsl.test.ByteHashSpeedTest rechunkSame test_files/large.pdf 10000 100
+
+chunkDiff
+---------
+
+Chunk two different versions of the file and compare the chunking.  We first
+chunk <file1> and use it to generate a table of tokens and associated chunks.
+We then check <file2> and see how many chunks from our chunking of <file1> we can find.  Note we do not actually chunk <file2>.  
+This code can be used to test speed/efficiency of different chunk lengths,
+etc...
+
+Call it using:
+
+java vsl.test.ByteHashSpeedTest rechunkDiff <orignal file> <new file version> <chunkSize> <beginTokenSize>
+
+Note: should have beginTokenSize < chunkSize.  These refer of coure to the original chunking.
+
+For instance:
+
+java vsl.test.ByteHashSpeedTest rechunkSame test_files/version1.pdf test_files/version2.pdf 10000 100
 
