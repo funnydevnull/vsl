@@ -50,18 +50,18 @@ public class vslEntry {
 	void load()
 		throws vslStorageException
 	{
-	    System.out.println("in vslEntry.load() using " + id.hashCode());
+	    vslLog.log(vslLog.DEBUG, "in vslEntry.load() using " + id.hashCode());
 	    Vector temp = null;	   
 	    vslFuture res = vsl.load(id);
 	    if (!res.success()) {
 		    // failed to load id, raise exception?
-		//System.out.println("failed to load id " + id);
-		return;
+			vslLog.log(vslLog.ERROR, "failed to load id " + id);
+			return;
 	    }		
 	    if(res.awaitUninterruptedly()) {	      
-		temp = res.getEntries();
+			temp = res.getEntries();
 	    }	    
-	    System.out.println(temp.size());
+	    vslLog.log(vslLog.DEBUG, "entry size: " + temp.size());
 	}
 
 

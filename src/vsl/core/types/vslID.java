@@ -34,4 +34,18 @@ public class vslID implements Serializable {
 	public int hashCode() {
 		return id.hashCode();
 	}
+
+	/**
+	 * Two vslIDs are equal if their id members are equal and non-null.
+	 */
+	@Override
+	public boolean equals(Object v) {
+		if ( (! (v instanceof vslID)) || id == null || ((vslID)v).getID() == null ) {
+			return false;
+		}
+		else 
+		{
+			return id.equals(((vslID)v).getID());
+		}
+	}
 }
