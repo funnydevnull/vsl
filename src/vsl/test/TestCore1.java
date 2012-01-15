@@ -5,6 +5,7 @@ import vsl.core.vsl;
 import vsl.core.vslChunk;
 import vsl.core.vslDataType;
 import vsl.core.vslStorageException;
+import vsl.core.types.vslID;
 
 import vsl.core.data.*;
 
@@ -37,6 +38,11 @@ public class TestCore1  {
 			if (args[0].equals("read"))
 			{
 				tester.read(args);
+			}
+			if (args[0].equals("update"))
+			{
+				// TestCore1 update <dbfile> <entry_id> <new_data> <chunks>
+				tester.update(args);
 			}
 		} catch (Exception e) {
 			System.err.println("Exception caught: " + e.toString());
@@ -83,12 +89,58 @@ public class TestCore1  {
 		myVsl.save();
 	}
 
-
 	void read(String[] args)
 		throws Exception
-	{
+        {	
+		// Hedeer: see my comment in VSL, if we access backend through VSL only then
+		// that would change this code to:
+		//   myVsl = new vsl();
+		//   myVsl.loadBackend(args[1]);
+		// otherwise we need to attach this backend to the vsl after initializing it
+		// UPDATE:  THESE COMMENTS ARENT AS RELEVANT, SEE THE SETTER SECTION IN VSL
 		vslMMBackend db = vslMMBackend.readMap(args[1]);
 		db.printMap();
+	}
+
+	void update(String[] args)
+		throws Exception
+	{
+		// load up the entry_id
+		// chunk the new data or new file
+		// add the file to given entry
+	        // TestCore1 update <db_file> <entry_id> <new_data> <chunks>
+		
+		// technically this is incorrect since vsl needs a config file
+	        myVsl = new vsl(args[1]);
+		vslMMBackend db = vslMMBackend.readMap(args[1]);
+		myVsl.setBackend(db);
+		String base = new String(args[3]);
+		int nChunks = 5;
+		try {
+			nChunks = new Integer(args[4]);
+		} catch (NumberFormatException nfe) {
+			System.err.println("Last argument to store must be a positive integer: " + args[4]);
+			System.exit(1);
+		}
+		if (nChunks < 0) {
+			System.err.println("Last argument to store must be a positive integer: " + args[4]);
+			System.exit(1);			
+		}
+		testDataType data = new testDataType();
+		for (int x = 0; x < nChunks; x++) {
+			String inString = new String(base + new Integer(x));
+			testChunk chunk = new testChunk(inString);
+			testDataExtra extra = new testDataExtra(new String("extra "+new Integer(x)));
+			chunk.setDataExtra(extra);
+			data.addChunk(chunk);
+			}
+		//vslID entryID = db.getKey(args[2]);
+		//entryID.setID(args[2]);
+		vslID entryID = new vslID();
+		entryID.setID(args[2]);
+		myVsl.updateEntry(entryID, data);
+		//myVsl.debugShow();
+		//myVsl.save();
 	}
 
 	/*  -------------- Inner Classes ---------------- */
