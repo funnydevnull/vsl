@@ -105,7 +105,7 @@ public class ByteDLL {
 		}
 		letter = first[atLetter];
 		// populate the prestruct at the first letter of each new word
-		if (atLetter == 0) {
+		if (atLetter < 3) {
 			// convert first three letters of word into indices between 0-255
 			// note: bytes values from -128 to 127 so must add offset
 			prestruct[first[0] + 128][first[1] + 128][first[2] + 128] = true;
@@ -197,13 +197,22 @@ public class ByteDLL {
 	 * attempts to be as efficient as possible in matching the token to
 	 * elements of this ByteDLL.
 	 *
-	 * @param	token	A byte array to match against the byte arrays encoded
-	 * in this ByteDLL.  For external efficiency in use we allow ourselves to
-	 * access a subset of this array.
+	 * We trade safety checking for speed.  In particular token must have token.length > 3 but we do not check this!
 	 *
-	 * 	@param	offset	Where to start looking in token.
+	 * 
 	 *
-	 * 	@param	len		How many bytes to search through in token.  This should
+	 * @param	token	A byte array of min length 3 which is matched against
+	 * the byte arrays encoded in this ByteDLL.  To allow efficient external
+	 * memory use the search can be made for a subarray of token by specifying
+	 * an offset and a length.  For efficiency the internal implementaiton
+	 * _requires_ that token.length > offset + 3 and this is _not_ safety
+	 * checked.
+	 *
+	 * 	@param	offset	Where to start looking in token.  Note this is assumed
+	 * 	to satisfy token.length > offset+3 and failing this will generate a
+	 * 	null pointer exception.
+	 *
+	 * 	@param	len		How many bytes to search through in token (after offset).  This should
 	 *				 	be less than the length of the bytes in	the ByteDLL.
 	 *
 	 * @return	A list of byte array's matching the query or null if nothing found.

@@ -28,6 +28,7 @@ import java.util.AbstractMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Collections;
+import java.util.Arrays;
 
 import java.text.DecimalFormat;
 
@@ -219,6 +220,7 @@ public class ByteHashSpeedTest {
 					}
 					hashKey = bw.hashCode();
 					chunks.put(bw, tmp);
+					tmp = new byte[chunkSize];
 					/*
 					String t = new String(tokenArray.array());
 					byte[] tr = t.getBytes();
@@ -289,11 +291,12 @@ public class ByteHashSpeedTest {
 		
 		Vector<byte[]> byteTokens = new Vector<byte[]>();
 		ByteDLL tokens = null;
-		ByteBuffer tokenArray = (maxBuffer > 0) ? ByteBuffer.allocate(maxBuffer) : null;
+		ByteBuffer readBuf = (maxBuffer > 0) ? ByteBuffer.allocate(maxBuffer) : null;
 		FileInputStream fs = new FileInputStream(infile);
 		BufferedInputStream bf = new BufferedInputStream(fs);
 		// buffer to read chunk into for comparison
-		byte[] tmp = new byte[chunkSize];
+		// we temporarily use this array to store a begin token to key the chunks hashmap off
+		byte[] foundTok = new byte[tokenSize];
 
 		System.out.println("Size of chunkset: " + chunks.size());
 		for(ByteWrapper key: chunks.keySet())
@@ -312,25 +315,37 @@ public class ByteHashSpeedTest {
 			try {
 				read = bf.read();
 				long t1 = System.nanoTime();
-				tokenArray.put((byte)read);
-				int position = tokenArray.position();
+				readBuf.put((byte)read);
+				int position = readBuf.position();
 				int offset = position - tokenSize;
-				byte[] token = tokenArray.array();
+				byte[] readArray = readBuf.array();
 				if (position >= tokenSize) {
 						//&& ! tokens.prestruct[token[offset] + 128][token[offset+1]+128][token[offset+2]+128]) {
-					List<byte[]> matches = tokens.matches(token, 
+					List<byte[]> matches = tokens.matches(readArray, 
 													position - tokenSize, tokenSize);
 					// got a match so lets check for the full data chunk
 					if (matches != null) {
 						chunksFound++;
-						/*
-						// copy the current token into tmp
-						System.arraycopy(token, position-tokenSize, tmp, 0, tokenSize);
+						byte[] chunkRead = new byte[chunkSize];
+						// copy the current token into the chunk input
+						System.arraycopy(readArray, position-tokenSize, chunkRead, 0, tokenSize);
+						// copy the current token into an array of its own
+						System.arraycopy(readArray, position-tokenSize, foundTok, 0, tokenSize);
 						// set a mark but only allow it to be valid for a short read limit
 						bf.mark(chunkSize-tokenSize+1);
 						// read the rest of the chunk into tmp
-						bf.read(tmp, tokenSize, chunkSize-tokenSize);
-						if (chunks.get(new ByteWrapper(tmp)) != null) {
+						bf.read(chunkRead, tokenSize, chunkSize-tokenSize);
+						// if we find a match we don't reset the stream so we just keep reading from beyond that
+						byte[] oldChunk = chunks.get(new ByteWrapper(foundTok));
+						/*if (oldChunk != null)
+						{
+							byte[] init = new byte[30];
+							System.arraycopy(chunkRead, 0, init, 0, 30);
+							System.out.println("Read: [" + new String(init) + "]");
+							System.arraycopy(oldChunk, 0, init, 0, 30);
+							System.out.println("Old:  [" + new String(init) + "]");
+						}*/
+						if (oldChunk != null && Arrays.equals(oldChunk, chunkRead) ) {
 							// we found a match so we note that and keep scanning the file from here
 							chunksMatch++;
 						} else {
@@ -340,7 +355,7 @@ public class ByteHashSpeedTest {
 						if (matches.size() > 1) {
 							System.out.println("Found [" + matches.size() + 
 									"] matching tokens at position [" + position + "]");
-						}*/
+						}
 					}
 					//tokenArray.remove();
 					// point our lastTok to the last elements of the buffer
@@ -354,12 +369,14 @@ public class ByteHashSpeedTest {
 				numReads++;
 				if ( numReads % (fileSize/20) == 0) System.out.print(".");
 				System.out.flush();
+				// when we get to the end of the byte buffer we reset it but copy in the last full
+				// token's worth of bytes in case a token crosses one buffer to another
 				if (position > maxBuffer - 1) {
-					byte[] tmp2 = new byte[tokenSize];
+					byte[] lastTok = new byte[tokenSize];
 					//copy last tokenSize elements into array
-					System.arraycopy(tokenArray.array(), position-tokenSize, tmp2, 0, tokenSize);
-					tokenArray = ByteBuffer.allocate(maxBuffer);
-					tokenArray.put(tmp2);
+					System.arraycopy(readBuf.array(), position-tokenSize, lastTok, 0, tokenSize);
+					readBuf = ByteBuffer.allocate(maxBuffer);
+					readBuf.put(lastTok);
 				}
 			} catch (IOException e) {
 				System.out.println("Caught excption reChunking: " + e.toString());
