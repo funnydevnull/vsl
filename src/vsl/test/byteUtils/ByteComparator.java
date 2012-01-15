@@ -19,6 +19,7 @@ class ByteComparator implements Comparator<byte[]> {
 			else if (b1[i] < b2[i]) {
 				return -1;
 			}
+			i++;
 		}
 		/**
 		 * if we got here we're at the end of one of the inputs

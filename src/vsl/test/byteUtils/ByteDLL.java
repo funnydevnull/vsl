@@ -47,6 +47,16 @@ public class ByteDLL {
 	ByteDLL prevLet = null;
 	ByteDLL nextLet = null;
 
+
+	// profiling vars
+	
+	// total depth down the word-letters
+	public long depth=0;
+	// total depth down the alphabetical letters
+	public long down=0;
+	// total number of calls
+	public long num=0;
+
 	/**
 	 * Generate a doubly-linked byte array from "input" recursively.  The input
 	 * to this constructor must be sorted and all elements must be of the same
@@ -128,7 +138,10 @@ public class ByteDLL {
 		throws Exception
 	{
 		ByteComparator bc = new ByteComparator();
+		System.out.println("About to sort [" + bytes.size() +  "] elements of size ["
+							+ bytes.get(0).length + "]");
 		Collections.sort(bytes, bc);
+		System.out.println("Sorted [" + bytes.size() + "] elements, putting into ByteDLL.");
 		ByteDLL head = new ByteDLL(0, 0, bytes, null, null);
 		return head;
 	}
@@ -166,27 +179,40 @@ public class ByteDLL {
 	 * elements of this ByteDLL.
 	 *
 	 * @param	token	A byte array to match against the byte arrays encoded
-	 * 					in this ByteDLL.  Its length should be less than those of the bytes in
-	 * 					the ByteDLL.
+	 * in this ByteDLL.  For external efficiency in use we allow ourselves to
+	 * access a subset of this array.
+	 *
+	 * 	@param	offset	Where to start looking in token.
+	 *
+	 * 	@param	len		How many bytes to search through in token.  This should
+	 *				 	be less than the length of the bytes in	the ByteDLL.
 	 *
 	 * @return	A list of byte array's matching the query or null if nothing found.
 	 */
-	public List<byte[]> matches(byte[] token)
+	public List<byte[]> matches(byte[] token, int offset, int len)
+		throws IndexOutOfBoundsException
 	{
+		int endlen = offset + len - 1;
+		num++;
+		if (endlen + 1> token.length) {
+			throw new IndexOutOfBoundsException("ByteDLL.matches() called with offset + len [" +
+					offset + " + " + len + "] > token.length [" + token.length +"].");
+		}
 		// to go fast we avoid recursive method calls but do things by hand!
 		ByteDLL cur = this;
-		int curElement = 0;
+		int curElement = offset;
 		while (cur != null) {
 			// we've matched to the end of the token so return the matching of the cur element.
 			byte curLet = token[curElement];
 			if (curLet == cur.letter) {
 				// we match the last letter in the token so return success
-				if (curElement == token.length - 1) {
+				if (curElement == endlen) {
 					return cur.matching;
 				}
 				// word still goes on so we need to keep matching
 				if (cur.nextInWord != null) {
 					curElement++;
+					depth++;
 					cur = cur.nextInWord;
 					continue;
 					//return nextInWord.matches(token, curElement+1)
@@ -204,6 +230,7 @@ public class ByteDLL {
 			// the current letter didn't match this letter so we pass it on to the next letter
 			// or report failure
 			if (cur.nextLet != null) {
+				down++;
 				cur = cur.nextLet;
 				continue;
 				//return nextLet.matches(token, curElement);
