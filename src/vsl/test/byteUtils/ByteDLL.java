@@ -48,12 +48,16 @@ public class ByteDLL {
 	ByteDLL nextLet = null;
 
 
+	public boolean[][][] prestruct;
+
 	// profiling vars
 	
 	// total depth down the word-letters
 	public long depth=0;
 	// total depth down the alphabetical letters
 	public long down=0;
+	// number of times match fails cause of preselection
+	public long prefail=0;
 	// total number of calls
 	public long num=0;
 
@@ -78,11 +82,20 @@ public class ByteDLL {
 	 *						alphabetically in the same letter sequence.
 	 *
 	 */
-	private ByteDLL(int atLetter, int atElement, List<byte[]> words, ByteDLL wPrev, ByteDLL lPrev) 
+	private ByteDLL(int atLetter, int atElement, List<byte[]> words, ByteDLL wPrev, 
+			ByteDLL lPrev, boolean[][][] pre) 
 		throws Exception
 	{
 		this.prevInWord = wPrev;
 		this.prevLet = lPrev;
+		// if this is the head element lets create a prestruct to search
+		if (pre == null) {
+			prestruct = new boolean[256][256][256];
+		}
+		else
+		{
+			prestruct = pre;
+		}
 		// get the word at the current element
 		byte[] first = words.get(atElement);
 		// we've read through all words so we're done
@@ -91,6 +104,12 @@ public class ByteDLL {
 			throw new Exception("atLetter[" + atLetter + ": larger than word [" + first.length + "]");
 		}
 		letter = first[atLetter];
+		// populate the prestruct at the first letter of each new word
+		if (atLetter == 0) {
+			// convert first three letters of word into indices between 0-255
+			// note: bytes values from -128 to 127 so must add offset
+			prestruct[first[0] + 128][first[1] + 128][first[2] + 128] = true;
+		}
 		matching = new LinkedList();
 		while(atElement < words.size())
 		{
@@ -109,14 +128,14 @@ public class ByteDLL {
 		// "words" and hence "matching" is sorted) and we're its prev letter
 		// in word
 		if (atLetter  < first.length - 1) {
-			nextInWord = new ByteDLL(atLetter + 1, 0, matching, this, null);
+			nextInWord = new ByteDLL(atLetter + 1, 0, matching, this, null, prestruct);
 		}
 		// we already incredmented atElement above
 		if (atElement < words.size())
 		{
 			// next letter start at atElement in the word list
 			// it shares the same prevInWord as us but we're its prevLet
-			nextLet = new ByteDLL(atLetter, atElement, words, prevInWord, this);
+			nextLet = new ByteDLL(atLetter, atElement, words, prevInWord, this, prestruct);
 		}
 	}
 
@@ -130,7 +149,7 @@ public class ByteDLL {
 		{
 			bytes.add(arg.getBytes());
 		}
-		ByteDLL head = new ByteDLL(0, 0, bytes, null, null);
+		ByteDLL head = new ByteDLL(0, 0, bytes, null, null, null);
 		return head;
 	}
 
@@ -142,7 +161,7 @@ public class ByteDLL {
 							+ bytes.get(0).length + "]");
 		Collections.sort(bytes, bc);
 		System.out.println("Sorted [" + bytes.size() + "] elements, putting into ByteDLL.");
-		ByteDLL head = new ByteDLL(0, 0, bytes, null, null);
+		ByteDLL head = new ByteDLL(0, 0, bytes, null, null, null);
 		return head;
 	}
 
@@ -192,8 +211,13 @@ public class ByteDLL {
 	public List<byte[]> matches(byte[] token, int offset, int len)
 		throws IndexOutOfBoundsException
 	{
-		int endlen = offset + len - 1;
 		num++;
+		// we have a quick pre-selection to check if first three chars of token match anything
+		if (!prestruct[token[offset] + 128][token[offset+1]+128][token[offset+2]+128]) {
+			prefail++;
+			return null;
+		}
+		int endlen = offset + len - 1;
 		if (endlen + 1> token.length) {
 			throw new IndexOutOfBoundsException("ByteDLL.matches() called with offset + len [" +
 					offset + " + " + len + "] > token.length [" + token.length +"].");

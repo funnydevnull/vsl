@@ -269,10 +269,32 @@ public class ByteHashSpeedTest {
 		throws Exception
 	{
 		if (tokenSize < 1) throw new Exception("TokenSize < 1 in reChunk");
-		Vector<byte[]> byteTokens = new Vector<byte[]>();
-		//while(iter.hasNext())
 		int debugcount = 6;
 		int debugmax = 6;
+		// the max buffer size before clearing the buffer
+		int maxBuffer  = 300 * tokenSize;
+		long fileSize = infile.length();
+		long list_time = 0;
+		long get_time = 0;
+		long numReads = 0;
+		long chunksFound = 0;
+		long chunksMatch = 0;
+		int debugMax = 3;
+		int debugCounter = 3;
+		/* we keep reading so long as we get back chunkSizes, 
+		 * after that the file is done.*/
+		// going to add read in bytes to here
+		int read = 0;
+
+		
+		Vector<byte[]> byteTokens = new Vector<byte[]>();
+		ByteDLL tokens = null;
+		ByteBuffer tokenArray = (maxBuffer > 0) ? ByteBuffer.allocate(maxBuffer) : null;
+		FileInputStream fs = new FileInputStream(infile);
+		BufferedInputStream bf = new BufferedInputStream(fs);
+		// buffer to read chunk into for comparison
+		byte[] tmp = new byte[chunkSize];
+
 		System.out.println("Size of chunkset: " + chunks.size());
 		for(ByteWrapper key: chunks.keySet())
 		{
@@ -281,44 +303,44 @@ public class ByteHashSpeedTest {
 			//byteTokens.add(iter.next().array());
 			byteTokens.add(key.data);
 		}
-		ByteDLL tokens = ByteDLL.fromBytes(byteTokens);
-		// the max buffer size before clearing the buffer
-		int maxBuffer  = 300 * tokenSize;
-		long fileSize = infile.length();
-		long list_time = 0;
-		long get_time = 0;
-		long numReads = 0;
-		long chunksFound = 0;
-		int debugMax = 3;
-		int debugCounter = 3;
-		// going to add read in bytes to here
-		ByteBuffer tokenArray = (maxBuffer > 0) ? ByteBuffer.allocate(maxBuffer) : null;
-		FileInputStream fs = new FileInputStream(infile);
-		BufferedInputStream bf = new BufferedInputStream(fs);
-		/* we keep reading so long as we get back chunkSizes, 
-		 * after that the file is done.*/
-		int read = 0;
+		tokens = ByteDLL.fromBytes(byteTokens);
 		long begin = System.nanoTime();
 		System.out.print("Progress: [");
 		System.out.flush();
 		while (read != -1)
 		{
 			try {
-				//read = bf.read(tmp, 0, chunkSize);
 				read = bf.read();
 				long t1 = System.nanoTime();
-				//tokenArray.add((byte)read);
 				tokenArray.put((byte)read);
 				int position = tokenArray.position();
+				int offset = position - tokenSize;
+				byte[] token = tokenArray.array();
 				if (position >= tokenSize) {
-					List<byte[]> matches = tokens.matches(tokenArray.array(), 
+						//&& ! tokens.prestruct[token[offset] + 128][token[offset+1]+128][token[offset+2]+128]) {
+					List<byte[]> matches = tokens.matches(token, 
 													position - tokenSize, tokenSize);
+					// got a match so lets check for the full data chunk
 					if (matches != null) {
 						chunksFound++;
+						/*
+						// copy the current token into tmp
+						System.arraycopy(token, position-tokenSize, tmp, 0, tokenSize);
+						// set a mark but only allow it to be valid for a short read limit
+						bf.mark(chunkSize-tokenSize+1);
+						// read the rest of the chunk into tmp
+						bf.read(tmp, tokenSize, chunkSize-tokenSize);
+						if (chunks.get(new ByteWrapper(tmp)) != null) {
+							// we found a match so we note that and keep scanning the file from here
+							chunksMatch++;
+						} else {
+							// no match so we rewind the file to the mark
+							bf.reset();
+						}
 						if (matches.size() > 1) {
 							System.out.println("Found [" + matches.size() + 
 									"] matching tokens at position [" + position + "]");
-						}
+						}*/
 					}
 					//tokenArray.remove();
 					// point our lastTok to the last elements of the buffer
@@ -333,11 +355,11 @@ public class ByteHashSpeedTest {
 				if ( numReads % (fileSize/20) == 0) System.out.print(".");
 				System.out.flush();
 				if (position > maxBuffer - 1) {
-					byte[] tmp = new byte[tokenSize];
+					byte[] tmp2 = new byte[tokenSize];
 					//copy last tokenSize elements into array
-					System.arraycopy(tokenArray.array(), position-tokenSize, tmp, 0, tokenSize);
+					System.arraycopy(tokenArray.array(), position-tokenSize, tmp2, 0, tokenSize);
 					tokenArray = ByteBuffer.allocate(maxBuffer);
-					tokenArray.put(tmp);
+					tokenArray.put(tmp2);
 				}
 			} catch (IOException e) {
 				System.out.println("Caught excption reChunking: " + e.toString());
@@ -350,7 +372,8 @@ public class ByteHashSpeedTest {
 		double sec = diff/1000000000;
 		// see javadoc for this class for hint on fromatting argument
 		DecimalFormat scientific = new DecimalFormat("0.#####E0");
-		System.out.println("Number of matching chunks: " + chunksFound);
+		System.out.println("Number of matching beginTokens: " + chunksFound);
+		System.out.println("Number of fully matching chunks: " + chunksMatch);
 		System.out.println("Total time taken: " + new Long(diff)  
 				+ " nanoseconds (" + scientific.format(sec) + " seconds)");
 		long list_percent = (100* list_time)/diff;
@@ -362,6 +385,8 @@ public class ByteHashSpeedTest {
 		long avg_down = tokens.down/tokens.num;
 		System.out.println("Average letter depth down ByteDLL: [" + new Long(avg_depth)  
 				+"], \t Avg length down alphabetical word list [" + new Long(avg_down) +"]");
+		long prefail_percent = (100*tokens.prefail)/tokens.num;
+		System.out.println("Prefail percentage: " + prefail_percent + "%");
 		System.out.println("");
 	}
 
