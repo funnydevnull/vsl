@@ -23,5 +23,10 @@ public class vslLog {
 		System.out.println(msg);
 	}
 
+	public static void logException(Exception e)
+	{
+		e.printStackTrace();
+	}
+
 
 }

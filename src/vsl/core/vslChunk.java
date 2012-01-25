@@ -10,22 +10,29 @@ import vsl.core.data.vslChunkHeaderExtra;
 import vsl.core.data.vslChunkData;
 import vsl.core.data.vslChunkDataExtra;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+
+
 public class vslChunk {
 
-	private vslID		id;
+	vslID		id;
 	private vslHash 	hash;
 	private vslDate		createTime;
 	private vslChunkHeaderExtra headerExtra = null;
 	private vslChunkDataExtra dataExtra = null;
-	private ByteBuffer 	data = null;
+	private byte[] 	data = null;
+
+	/* should this be a vslHash?? */
+	private byte[] chunkDigest;
 	
 	public vslChunk() {
 	}
 	
 	
 	public vslChunk(byte[] d) {
-		data = ByteBuffer.allocate(d.length);
-		data.put(d);
+		setData(d);
 		createTime = new vslDate();
 	}
 	
@@ -43,8 +50,7 @@ public class vslChunk {
 		this.hash = chunkData.hash;
 		this.createTime = chunkData.createTime;
 		this.dataExtra = chunkData.extra;
-		this.data = ByteBuffer.allocate(chunkData.data.length);
-		this.data.put(chunkData.data);
+		setData(chunkData.data);
 	}
 	
 
@@ -82,6 +88,8 @@ public class vslChunk {
 	}
 
 
+	
+
 	/**
 	 * Return a vslChunkData representation of this chunk that can be stored to
 	 * the backend.
@@ -94,11 +102,37 @@ public class vslChunk {
 		chunk.extra = this.dataExtra;
 		if (data != null)
 		{
-			chunk.data = data.array();
+			chunk.data = data;
 		}
 		return chunk;
 	}
 	
+
+
+	/* ---------------- OVERRIDABLE METHODS ----------------------- */
+
+	/**
+	 * Generate and store the digest associated with this chunk.  Particular
+	 * implementations are free to generate different types of digests.
+	 *
+	 */
+	protected void genDigest()
+		throws vslException
+	{
+		try {
+			MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+			//digest.update(chunkData);
+			//byte[] hash = digest.digest();
+			//return hash;
+			chunkDigest = digest.digest(getData());
+		} catch (NoSuchAlgorithmException e) {
+			// Log error!!
+			vslLog.log(vslLog.ERROR, "Could not find algorithm to generate digest: " + 
+					e.toString());
+			throw new vslException(e);
+		}
+	}
+
 
 
 
@@ -107,11 +141,36 @@ public class vslChunk {
 
 	public byte[] getData() {
 		// for testing purposes right now
-		return data.array();
+		return data;
 	}
 	
-	public void setData(byte[] newData) {
-		data.put(newData);
+	/**
+	 * Set the data of this chunk to 'newData'.  
+	 *
+	 * @return	0 on success else -1 if newData is null.
+	 */
+	public int setData(byte[] newData) {
+		if (newData == null) {
+			return -1;
+		}
+		return setData(newData, 0, newData.length);
+	}
+
+	/**
+	 * Copy 'len' bytes of data, starting at 'offset', from 'newData' into the
+	 * data element of this chunk.  Data should always be set using this
+	 * method, even internally in vslChunk.  This will allow us to do post/pre
+	 * data setting cleaning up.
+	 *
+	 * @return	0 on success else -1 if newData is null or too short.
+	 */
+	public int setData(byte[] newData, int offset, int len) {
+		if (newData == null || newData.length < offset + len) {
+			return -1;
+		}
+		data = new byte[len];
+		System.arraycopy(newData, offset, data, 0, len);
+		return 0;
 	}
 	
 	public vslChunkDataExtra getDataExtra() {
@@ -125,6 +184,25 @@ public class vslChunk {
 
 	public vslID getID() {
 		return id;
+	}
+
+
+	/**
+	 * @return 	The length of the byte array associated with the chunk data
+	 * (not including metadata) or zero if there is no data.
+	 */
+	public long dataLength() {
+		if (data != null) return data.length;
+		return 0;
+	}
+
+
+	/**
+	 * @return	A digest/hash associated with this chunk.
+	 */
+	public byte[] getDigest()
+	{
+		return chunkDigest;
 	}
 
 }

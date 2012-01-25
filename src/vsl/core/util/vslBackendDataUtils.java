@@ -8,8 +8,9 @@ import vsl.core.types.*;
 public class vslBackendDataUtils {
 
 
-	public static String backendDataToString(vslBackendData data) {
+	public static String backendDataToString(int maxDataLen, vslBackendData data) {
 		StringBuffer sb = new StringBuffer();
+		// an array which we copy data into for display
 		if (data instanceof vslVersionHeader) 
 		{
 			vslVersionHeader v = (vslVersionHeader) data;
@@ -63,10 +64,22 @@ public class vslBackendDataUtils {
 			{
 				sb.append(v.createTime.toString());
 			}
-			sb.append("], data=[");
+			sb.append("], ");
 			if (v.data!= null) 
 			{
-				sb.append(new String(v.data));
+				//byte[] copy = new byte[maxDataLen];
+				//System.arraycopy(v.data, 0, copy, 0, maxDataLen);
+				//sb.append(new String(new Integer(copy.length).toString()));
+				//sb.append(new String(new Integer(v.data.length).toString()));
+				int showLen = Math.min(v.data.length, maxDataLen);
+				sb.append("data[first ").append(new
+					Integer(showLen).toString()).append(" of ").append(new
+					Integer(v.data.length).toString()).append(" bytes]=[");
+				sb.append(new String(v.data, 0, showLen));
+			}
+			else
+			{
+				sb.append("data[");
 			}
 			sb.append("], extra=[");
 			if (v.extra!= null) 

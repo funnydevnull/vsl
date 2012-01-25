@@ -234,6 +234,14 @@ public class vslMMBackend implements vslBackend, Serializable {
 
 	public void printMap()
 	{
+		printMap(100);
+	}
+
+	public void printMap(int bytesToShow)
+	{
+		if (bytesToShow < 0) {
+			bytesToShow = 100;
+		}
 		System.out.println("Size: " + storage.keySet().size());
 		for(vslID id: storage.keySet())
 		{
@@ -241,8 +249,8 @@ public class vslMMBackend implements vslBackend, Serializable {
 			System.out.println("Key: [" + id + "]");
 			for(vslBackendData data: storage.get(id))
 			{
-				System.out.println("Val: [" + 
-						vslBackendDataUtils.backendDataToString(data) + "]");
+				System.out.println("Val : [" + 
+						vslBackendDataUtils.backendDataToString(bytesToShow, data) + "]");
 			}
 			System.out.println("===============================");
 		}

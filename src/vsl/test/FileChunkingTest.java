@@ -1,9 +1,16 @@
 package vsl.test;
 
-import vsl.test.MMStore;
+//import vsl.test.MMStore;
+import vsl.core.vsl;
+import vsl.core.vslStorageException;
 
+import vsl.handlers.FileHandler.vslFileHandler;
+import vsl.handlers.FileHandler.vslFileDataType;
 import vsl.handlers.FileHandler.vslFileDataChunk;
+import vsl.handlers.FileHandler.byteUtils.ByteDLL;
+import vsl.handlers.FileHandler.byteUtils.ByteWrapper;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -17,7 +24,11 @@ import java.util.Vector;
 import java.util.StringTokenizer;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 
+
+import java.nio.ByteBuffer;
 
 /**
  * A test class for prototyping file chunking.  Work in progress....
@@ -36,15 +47,20 @@ public class FileChunkingTest {
 
 	//private static int chunkSize = 100*1000;
 	//private static int tokenSize = 1000;
-	private static int chunkSize = 10*1000;
-	private static int tokenSize = 1000;
+	//private static int chunkSize = 10*1000;
+	//private static int tokenSize = 1000;
+	private static int chunkSize = 500;
+	private static int tokenSize = 50;
 	private static MMStore db;
 
 	private static String cmd;
 	private static String source;
-	private static String dbfile;
+	//private static String dbfile;
 
 	private final static HashMap cmds = new HashMap();
+
+
+	private static vsl core;
 
 
 	public static void init()
@@ -54,6 +70,13 @@ public class FileChunkingTest {
 		cmds.put("compare", new Integer(3));
 		cmds.put("reconstruct", new Integer(4));
 	}
+
+	public static void initVSL(String dbfile)
+		throws vslStorageException
+	{
+		core = new vsl(dbfile);
+	}
+
 
 	public static void main(String[] args)
 	{
@@ -65,15 +88,23 @@ public class FileChunkingTest {
 			System.exit(1);
 		}
 		cmd = args[0].toLowerCase();
-		dbfile = args[1];
+		String dbfile = args[1];
+		try {
+			initVSL(dbfile);
+		} catch (Exception e) {
+			System.err.println("Caught exception: " + e.toString());
+			e.printStackTrace();
+			System.exit(1);
+		}
 		Integer cmdint = (Integer) cmds.get(cmd);
 		switch(cmdint)
 		{
 			case 1:			create(args); 			break;
+			/*
 			case 2:			list();					break;
 			case 3:			unimplemented();		break;
 			case 4:			reconstruct(args);		break;
-
+			*/
 		}
 		System.exit(0);
 	}
@@ -94,7 +125,7 @@ public class FileChunkingTest {
 
 	/**
 	 * List content of db file.
-	 */
+	 *
 	public static void list()
 	{
 		try {
@@ -104,6 +135,7 @@ public class FileChunkingTest {
 			System.exit(1);
 		} catch (Exception e) {
 			System.err.println("Caught exception: " + e.toString());
+			e.printStackTrace();
 			System.exit(1);
 		}
 		Iterator iter = db.keySet().iterator();
@@ -114,7 +146,7 @@ public class FileChunkingTest {
 			System.out.println("[" + key + "]:  Chunks: [" 
 						+ ((Vector)db.get(key)).size() + "]");
 		}
-	}
+	}*/
 
 	
 	/**
@@ -130,30 +162,42 @@ public class FileChunkingTest {
 		}
 		source = args[2];
 		try {
+			/*
 			try {
 				db = MMStore.readMap(dbfile);
 			} catch (FileNotFoundException e) {
 				System.out.println("File " + dbfile + " does not exist.  Will create.");
 				db = new MMStore(dbfile);
 			}
-			chunks = chunkFile(source);
+			*/
+			vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
+			chunks = handler.chunkFile(source);
+			vslFileDataType fileData = new vslFileDataType();
 			StringTokenizer st = new StringTokenizer(source, "/");
 			String fname = "UNSET";
 			while (st.hasMoreTokens()) {
 				fname = st.nextToken();
 			}
-			db.put(fname, chunks);
-			db.writeMap();
+			fileData.setName(fname);
+			for (vslFileDataChunk chunk: chunks) {
+				fileData.addChunk(chunk);
+			}
+			//db.put(fname, chunks);
+			//db.writeMap();
+			core.addEntry(fileData);
+			core.debugShow();
+			core.save();
 
 		} catch (Exception e) {
 			System.err.println("Caught exception: " + e.toString());
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
 
 	/**
 	 * Dump db entry to a file passed as third cmd line arg.
-	 */
+	 *
 	public static void reconstruct(String[] args)
 	{
 		Vector<vslFileDataChunk> chunks = null;
@@ -190,14 +234,17 @@ public class FileChunkingTest {
 						+ "' found in dbfile '" + dbfile + "'. Exiting.");
 				System.exit(1);
 			}
-			unchunk(bf, chunks);
+			vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
+			handler.unchunk(bf, chunks);
 			bf.flush();
 			fl.close();
 		} catch (Exception e) {
 			System.err.println("Caught exception: " + e.toString());
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
+	*/
 
 	/**
 	 *  read off args and compare a file in DB with a new version passed as just 
@@ -207,7 +254,7 @@ public class FileChunkingTest {
 	 *  - write comparison code
 	 *  - Split method: read args + input/chunk file
 	 *  				compare chunks in a seperate method
-	 */
+	 *
 	public static void compare(String[] args)
 	{
 		Vector<vslFileDataChunk> oldChunks = null;
@@ -219,8 +266,9 @@ public class FileChunkingTest {
 		}
 		source = args[2];
 		String newver = args[3];
+		vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
 		try {
-			newChunks = chunkFile(newver);	
+			newChunks = handler.chunkFile(newver);	
 		}
 		catch(FileNotFoundException e)
 		{
@@ -245,114 +293,10 @@ public class FileChunkingTest {
 			System.out.println("old chunks: " + oldChunks);
 		} catch (Exception e) {
 			System.err.println("Caught exception: " + e.toString());
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
-
-
-
-
-	/* ------------------ FileChunking methods ------------------------*/
-
-	/**
-	 * These methods should eventually be moved to the vslFileHander as well as some
-	 * of the internal logic of the methods above.
-	 */
-
-
-	/**
-	 * Recoonstruct a file from its chunks and dump them in the output stream bf.
-	 */
-	public static void unchunk(BufferedOutputStream bf, Vector<vslFileDataChunk> chunks)
-	{
-		Collections.sort(chunks);
-		for(vslFileDataChunk chunk: chunks)
-		{
-			try {
-				byte[] data = chunk.getData();
-				bf.write(data, 0, data.length);
-			} catch (IOException e) {
-				System.out.println("Caught excption chunking: " + e.toString());
-			}
-		}
-	}
-
-	/**
-	 * Chunk the named file using the chunklength and tokenlength defined as static
-	 * fields in this class.
-	 */
-	public static Vector<vslFileDataChunk> chunkFile(String filename)
-		throws FileNotFoundException
-	{
-		BufferedInputStream bf = new BufferedInputStream(new FileInputStream(filename));
-		Vector<vslFileDataChunk> ch = new Vector<vslFileDataChunk>();
-		int read = chunkSize;
-		int chunkNum = 0;
-		byte[] tmp = new byte[chunkSize];
-		/* we keep reading so long as we get back chunkSizes, 
-		 * after that the file is done.*/
-		while (read == chunkSize)
-		{
-			vslFileDataChunk chunk;
-			try {
-				read = bf.read(tmp, 0, chunkSize);
-				chunk =  new vslFileDataChunk(chunkNum++, read, tokenSize, tmp);
-				chunk.setData(read, tmp);
-				System.out.println("Got chunk [" + chunkNum + "];  size: " 
-									+ chunk.getLength() + ", digest: ["
-									+ new String(chunk.getDigest()) + "]");
-				String bt = new String(chunk.getBeginToken());
-				String et = new String(chunk.getEndToken());
-				System.out.println("beginToken: " + bt);
-				System.out.println("endToken: " + et  + "\n=====================");
-				ch.add(chunk);
-			} catch (IOException e) {
-				System.out.println("Caught excption chunking: " + e.toString());
-			}
-		}
-		return ch;
-	}
-
-	/**
-	 * IMPLEMENTATION INCOMPLETE!!
-	 *
-	 * Chunk a file in a way that tries to maximize the overlap with an old chunking
-	 * by using the tokens on those chunks to try to define our new chunks.
-	 *
-	 *
-	 * NOTE: Still UNIMPLEMENTED
-	 */
-	public static Vector<vslFileDataChunk> reChunkFile(String filename, 
-												Vector<vslFileDataChunk> oldChunks)
-		throws FileNotFoundException
-	{
-		BufferedInputStream bf = new BufferedInputStream(new FileInputStream(filename));
-		Vector<vslFileDataChunk> ch = new Vector<vslFileDataChunk>();
-		int read = chunkSize;
-		int chunkNum = 0;
-		byte[] tmp = new byte[chunkSize];
-		/* we keep reading so long as we get back chunkSizes, 
-		 * after that the file is done.*/
-		while (read == chunkSize)
-		{
-			vslFileDataChunk chunk;
-			try {
-				read = bf.read(tmp, 0, chunkSize);
-				chunk =  new vslFileDataChunk(chunkNum++, read, tokenSize, tmp);
-				chunk.setData(read, tmp);
-				System.out.println("Got chunk [" + chunkNum + "];  size: " 
-									+ chunk.getLength() + ", digest: ["
-									+ new String(chunk.getDigest()) + "]");
-				String bt = new String(chunk.getBeginToken());
-				String et = new String(chunk.getEndToken());
-				System.out.println("beginToken: " + bt);
-				System.out.println("endToken: " + et  + "\n=====================");
-				ch.add(chunk);
-			} catch (IOException e) {
-				System.out.println("Caught excption chunking: " + e.toString());
-			}
-		}
-		return ch;
-	}
+	*/
 
 }

@@ -1,7 +1,7 @@
 package vsl.test;
 
-import vsl.test.byteUtils.ByteDLL;
-import vsl.test.byteUtils.ByteWrapper;
+import vsl.handlers.FileHandler.byteUtils.ByteDLL;
+import vsl.handlers.FileHandler.byteUtils.ByteWrapper;
 
 import java.io.IOException;
 import java.io.File;

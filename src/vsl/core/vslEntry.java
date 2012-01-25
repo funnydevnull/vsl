@@ -50,7 +50,7 @@ public class vslEntry {
 	void load()
 		throws vslStorageException
 	{
-	    vslLog.log(vslLog.DEBUG, "in vslEntry.load() using " + id.hashCode());
+	    vslLog.log(vslLog.DEBUG, "in vslEntry.load() using hashcode: " + id.hashCode());
 	    Vector temp = null;	   
 	    vslFuture res = vsl.load(id);
 	    if (!res.success()) {

@@ -1,60 +1,122 @@
 package vsl.handlers.FileHandler;
 
-import vsl.core.vslDate;
-import vsl.core.vslID;
+import vsl.core.types.vslDate;
+import vsl.core.types.vslID;
+import vsl.core.vslChunk;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChunk>
-	//extends vslDataChunk
+public class vslFileDataChunk extends vslChunk implements Comparable<vslFileDataChunk>
+	//implements Serializable, Comparable<vslFileDataChunk>
 {
 
-	private vslID id;
-
-	private int chunkNum = -1;
-	private int chunkSize = -1;
-	private int tokenSize = -1;
-
-	private byte[] chunkData;
-
-	private byte[] chunkDigest;
-
-	private byte[] beginToken;
-	private byte[] endToken;
-
-	private vslDate timeStamp;
+	vslFileChunkExtra extra = new vslFileChunkExtra();
+	
 
 
 
-	public vslFileDataChunk(int num, int len, int token)
+	public vslFileDataChunk(int num, int token)
 	{
-		chunkNum = num;
-		chunkSize = len;
-		tokenSize = token;
-		chunkData = new byte[chunkSize];
-		beginToken = new byte[tokenSize];	
-		endToken = new byte[tokenSize];	
+		extra.chunkNum = num;
+		//extra.chunkSize = len;
+		extra.tokenSize = token;
+		//chunkData = new byte[chunkSize];
+		extra.beginToken = new byte[extra.tokenSize];	
+		extra.endToken = new byte[extra.tokenSize];	
 	}
 
-	public vslFileDataChunk(int num, int len, int token, byte[] data)
+	public vslFileDataChunk(int num, int token, byte[] data, int offset, int len)
 	{
-		chunkNum = num;
-		chunkSize = len;
-		tokenSize = token;
-		setData(len, data);
+		extra.chunkNum = num;
+		//chunkSize = len;
+		extra.tokenSize = token;
+		setData(data);
 		setTokens();
 	}
 
 
 	public int compareTo(vslFileDataChunk other)
 	{
-		return this.chunkNum - other.getChunkNum();
+		return extra.chunkNum - other.getChunkNum();
 	}
 
 	/* beyond here trivial getters/setters */
+
+
+	/* ----------------- PRIVATE -------------------- */
+
+	private void setTokens()
+	{
+		if (getData() != null && extra.tokenSize > 0)
+		{
+			extra.beginToken = new byte[extra.tokenSize];
+			extra.endToken = new byte[extra.tokenSize];
+			System.arraycopy(extra.beginToken, 0, getData(), 0, extra.tokenSize);
+			System.arraycopy(extra.endToken, 0, getData(), 
+					getData().length - extra.tokenSize, extra.tokenSize);
+		}
+		else
+		{
+			//log error
+		}
+	}
+
+
+	/* ----------------- GETTERS/SETTERS -------------------- */
+
+	public int getTokenSize()
+	{
+		return extra.tokenSize;
+	}
+
+	public byte[] getBeginToken()
+	{
+		return extra.beginToken;
+	}
+	
+	public byte[] getEndToken()
+	{
+		return extra.endToken;
+	}
+
+
+	public int getChunkNum()
+	{
+		return extra.chunkNum;
+	}
+
+
+
+
+	/**
+	 * FROM BEFORE IMPLEMENTING vslChunk:
+	 *
+	 *
+	 
+	private vslID id;
+
+	private byte[] chunkData;
+
+	private byte[] beginToken;
+	private byte[] endToken;
+
+	private vslDate timeStamp;
+	
+	private byte[] chunkDigest;
+	
+
+	public int getLength()
+	{
+		return chunkSize;
+	}
+	
+	public byte[] getData()
+	{
+		return chunkData;
+	}
 
 	/**
 	 * Set the data for this chunk.  
@@ -63,7 +125,7 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 	 * @param	data	a non-null array of byte data.
 	 *
 	 * @return 	-1 on error (data null or too long), else 0.
-	 */
+	 *
 	public int setData(int len, byte[] data)
 	{
 		if (data == null)
@@ -76,25 +138,7 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 		genDigest();
 		return 0;
 	}
-
-	/* ----------------- PRIVATE -------------------- */
-
-	private void setTokens()
-	{
-		if (chunkData != null && tokenSize > 0)
-		{
-			beginToken = new byte[tokenSize];
-			endToken = new byte[tokenSize];
-			System.arraycopy(beginToken, 0, chunkData, 0, tokenSize);
-			System.arraycopy(endToken, 0, chunkData, 
-					chunkData.length - tokenSize, tokenSize);
-		}
-		else
-		{
-			//log error
-		}
-	}
-
+	
 	private void genDigest()
 	{
 		try {
@@ -102,44 +146,20 @@ public class vslFileDataChunk implements Serializable, Comparable<vslFileDataChu
 			//digest.update(chunkData);
 			//byte[] hash = digest.digest();
 			//return hash;
-			chunkDigest = digest.digest(chunkData);
+			chunkDigest = digest.digest(getData());
 		} catch (NoSuchAlgorithmException e) {
 			// Log error!!
 			System.err.println("vslFileDataChunk: " + e.toString());
 		}
 	}
 
-	/* ----------------- GETTERS/SETTERS -------------------- */
-
-	public byte[] getBeginToken()
-	{
-		return beginToken;
-	}
-	
-	public byte[] getEndToken()
-	{
-		return endToken;
-	}
-
-	public int getLength()
-	{
-		return chunkSize;
-	}
-
-	public int getChunkNum()
-	{
-		return chunkNum;
-	}
-
-	public byte[] getData()
-	{
-		return chunkData;
-	}
 	
 	public byte[] getDigest()
 	{
 		return chunkDigest;
 	}
-	
+
+	 /*
+	 */
 
 }

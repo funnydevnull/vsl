@@ -26,7 +26,14 @@ public class TestCore1  {
 	{
 		if (args.length < 2)
 		{
-			System.out.println("Must specify db file:\n TestCore1 <cmd> <dbfile> [opt args]");
+			System.out.println("Must specify db file:\n TestCore1 <cmd> <dbfile> [cmd args]\n");
+			System.out.println("Commands: store, read, update\n");
+			System.out.println("Cmd args:\n" +
+				"\n\tstore:\t[string]\tA string that seeds the test data." +
+				"\n\t\t[numChunks]\tNumber of chunks to create\n"+
+				"\n\tread:\t[bytesToShow]\t(Number of bytes of each chunk to show.\n"+
+				"\n\tupdate:\t[vslID]\t\tThe vslID of an entry to read in (for now)."+
+				"\n\t\t[numChunks]\tNot used yet but must be passed an int here.\n");
 			System.exit(1);
 		}
 		TestCore1 tester = new TestCore1();
@@ -91,7 +98,14 @@ public class TestCore1  {
 
 	void read(String[] args)
 		throws Exception
-        {	
+    {	
+		int nBytes = 100;
+		try {
+			nBytes = new Integer(args[2]);
+		} catch (NumberFormatException nfe) {
+			System.err.println("Second argument to store must be a positive integer: " + args[3]);
+			System.exit(1);
+		}
 		// Hedeer: see my comment in VSL, if we access backend through VSL only then
 		// that would change this code to:
 		//   myVsl = new vsl();
@@ -99,7 +113,7 @@ public class TestCore1  {
 		// otherwise we need to attach this backend to the vsl after initializing it
 		// UPDATE:  THESE COMMENTS ARENT AS RELEVANT, SEE THE SETTER SECTION IN VSL
 		vslMMBackend db = vslMMBackend.readMap(args[1]);
-		db.printMap();
+		db.printMap(nBytes);
 	}
 
 	void update(String[] args)
@@ -138,7 +152,8 @@ public class TestCore1  {
 		//entryID.setID(args[2]);
 		vslID entryID = new vslID();
 		entryID.setID(args[2]);
-		myVsl.updateEntry(entryID, data);
+		vslID id = myVsl.updateEntry(entryID, data);
+		System.out.println("Found id: " + id);
 		//myVsl.debugShow();
 		//myVsl.save();
 	}

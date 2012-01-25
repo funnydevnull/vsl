@@ -21,25 +21,6 @@ If we use MultiValueMap from apache need to include classpath:
 javac -cp .:../lib/commons-collections-3.2.1.jar  vsl/test/SerializingTest.java 
 
 
-FileChunkingTest
-================
-
-To run cd to vsl/src and execute as below.
-
-Chunk a file (in this case vsl_deisng_notes-1.tex) and store in file mydb:
-
-java vsl.test.FileChunkingTest create mydb  ../test/input/version/vsl_design_notes-1.tex
-
-NOTE: chunking params currently hard-coded.  Should make them args.
-
-To see the chunked files in a DB:
-
-java vsl.test.FileChunkingTest list mydb
-
-To rebuild a chunked file and put it in "outputfile" use:
-
-java vsl.test.FileChunkingTest reconstruct mydb vsl_design_notes-1.tex outputfile
-
 
 TestCore1
 =========
@@ -129,4 +110,29 @@ Note: should have beginTokenSize < chunkSize.  These refer of coure to the origi
 For instance:
 
 java vsl.test.ByteHashSpeedTest rechunkSame test_files/version1.pdf test_files/version2.pdf 10000 100
+
+
+FileChunkingTest
+================
+
+This test file chunking now USING vsl core.
+
+To run cd to vsl/src and execute as below.
+
+Chunk a file (in this case vsl_deisng_notes-1.tex) and store in the vsl DB-file mydb:
+
+java vsl.test.FileChunkingTest create mydb  ../test/input/version/vsl_design_notes-1.tex
+
+NOTE: chunking params currently hard-coded (i.e. size of chunk and begin
+token).  Should make them args.
+
+Since VSL doesn't yet support reading out entries we can't directly read or
+reconstruct a file but instead we can access it using the printMap method in
+the vslMMBackend but this requires using the TestCore1 class.
+
+java vsl.test.TestCore1 read mydb [numBytes]
+
+By default this method only shows the first 100 bytes of each data entry but by
+providing an arg this can be increased.
+
 

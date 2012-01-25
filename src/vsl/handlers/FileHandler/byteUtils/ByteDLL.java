@@ -1,4 +1,4 @@
-package vsl.test.byteUtils;
+package vsl.handlers.FileHandler.byteUtils;
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Collections;
 import java.util.Comparator;
 
-import vsl.test.byteUtils.ByteComparator;
+import vsl.handlers.FileHandler.byteUtils.ByteComparator;
 
 /**
  * a byte doubly linked list built from a byte[] array.
