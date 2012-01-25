@@ -1,0 +1,58 @@
+ISSUES
+======
+
+We use this file to track open issues with the system.  This can be features we
+need to implement but want to hold off on or simple problems we notice along
+the way, etc...
+
+Please remove issues once they've been fixed.
+
+
+FileChunking:
+------------
+
+- We required fixed size tokens but this can be a problem because if we fix a
+tokenSize there might be chunks smaller than that token size (e.g. near the end
+of the file).  How do we want to handle such cases?  We need to cleanup ByteDLL
+to suppor variable length tokens :-(
+
+NOTE: we handle this fine in generating the begin/end Tokens but the problem is
+that ByteDLL assumes it gets equal length tokens which may now no longer be the
+case.  If we pad them with zeros we'll probably never match them to the file
+data.  Unless we do this only for ByteDLL but for the actual comparison we use
+only the real token?
+
+
+
+Core To Do
+==========
+
+A list of stuff we need to think about still:
+
+vslBackendData:
+--------------
+- Store length of data chunks in vslChunkData
+- Add some serialID's to vslBackendData subclasses
+- Some sort of digest to all vslBackendData
+- Add a hash of the vslChunkData's data to the chunkHeader.
+
+
+General
+-------
+
+- vslID needs to be flexible enough to support different types of backend
+  hash's/ids.  Maybe the id should just be a general object?  
+- Or do we want to allow backends to override vslID?
+- Likewise vslHash needs to be thought of more carefully.
+
+
+
+
+
+
+
+Version Control
+---------------
+
+- We should start including per-file versioning info (like CVS lets you do). Do
+  we automate this or do it by hand?

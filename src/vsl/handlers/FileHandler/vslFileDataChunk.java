@@ -3,6 +3,7 @@ package vsl.handlers.FileHandler;
 import vsl.core.types.vslDate;
 import vsl.core.types.vslID;
 import vsl.core.vslChunk;
+import vsl.core.vslLog;
 
 import java.io.Serializable;
 import java.security.MessageDigest;
@@ -54,13 +55,22 @@ public class vslFileDataChunk extends vslChunk implements Comparable<vslFileData
 		{
 			extra.beginToken = new byte[extra.tokenSize];
 			extra.endToken = new byte[extra.tokenSize];
-			System.arraycopy(extra.beginToken, 0, getData(), 0, extra.tokenSize);
-			System.arraycopy(extra.endToken, 0, getData(), 
-					getData().length - extra.tokenSize, extra.tokenSize);
+			// if the data is smaller than the tokens then we just use the full data.
+			int copyAmount = Math.min(extra.tokenSize, getData().length);
+			// copy tokenSize data from begining of data to beginToken
+			System.arraycopy(getData(), 0, extra.beginToken, 0, copyAmount);
+			// copy tokenSize data from end of data to endToken
+			System.arraycopy(getData(), getData().length - copyAmount, 
+						extra.endToken,  0, copyAmount);
 		}
 		else
 		{
-			//log error
+			if (getData() == null) {
+				vslLog.log(vslLog.ERROR, "Failed to set tokens: no data in chunk!");
+			}
+			else {
+				vslLog.log(vslLog.ERROR, "Failed to set tokens: token size = " + extra.tokenSize);
+			}
 		}
 	}
 
