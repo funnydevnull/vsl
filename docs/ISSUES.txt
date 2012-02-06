@@ -1,9 +1,9 @@
 ISSUES
 ======
 
-We use this file to track open issues with the system.  This can be features we
-need to implement but want to hold off on or simple problems we notice along
-the way, etc...
+We use this file to track open issues with the system.  This can be
+features we need to implement but want to hold off on or simple problems we
+notice along the way, etc...
 
 Please remove issues once they've been fixed.
 
@@ -12,9 +12,9 @@ FileChunking:
 ------------
 
 - We required fixed size tokens but this can be a problem because if we fix a
-tokenSize there might be chunks smaller than that token size (e.g. near the end
-of the file).  How do we want to handle such cases?  We need to cleanup ByteDLL
-to suppor variable length tokens :-(
+  tokenSize there might be chunks smaller than that token size (e.g. near the
+  end of the file).  How do we want to handle such cases?  We need to
+  cleanup ByteDLL to suppor variable length tokens :-(
 
 NOTE: we handle this fine in generating the begin/end Tokens but the problem is
 that ByteDLL assumes it gets equal length tokens which may now no longer be the
@@ -22,7 +22,9 @@ case.  If we pad them with zeros we'll probably never match them to the file
 data.  Unless we do this only for ByteDLL but for the actual comparison we use
 only the real token?
 
-
+- In rechunking a file we don't yet handle the possibility of two identical
+  beginTokens that correspond to different chunks.  To do this we should put
+  chunks in a multimap when checking them against tokens.  
 
 Core To Do
 ==========

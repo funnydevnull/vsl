@@ -119,12 +119,18 @@ This test file chunking now USING vsl core.
 
 To run cd to vsl/src and execute as below.
 
+Chunking
+--------
+
 Chunk a file (in this case vsl_deisng_notes-1.tex) and store in the vsl DB-file mydb:
 
 java vsl.test.FileChunkingTest create mydb  ../test/input/version/vsl_design_notes-1.tex
 
 NOTE: chunking params currently hard-coded (i.e. size of chunk and begin
 token).  Should make them args.
+
+Reading
+-------
 
 Since VSL doesn't yet support reading out entries we can't directly read or
 reconstruct a file but instead we can access it using the printMap method in
@@ -134,5 +140,24 @@ java vsl.test.TestCore1 read mydb [numBytes]
 
 By default this method only shows the first 100 bytes of each data entry but by
 providing an arg this can be increased.
+
+
+Rechunking
+----------
+
+This test chunks a file and then tries to chunk the second file while reusing
+as many chunks as it can from the first (i.e. this is a chunk-based diff).  It can be called as follows:
+
+java vsl.test.FileChunkingTest compare <original_file> <modified_file>
+
+To check that its properly rechunking this program can unchunk its internal
+copy of each file and store them into a new file so you can diff them against
+the input files (to make sure the rechunking is working correctly).  
+
+When the test is run it prompts you if you would like it to rebuild the input
+file (both the original and the modified one) from its internally stored chunks
+(note these chunks are not stored to VSL since we don't yet support read/update
+of the core).  By default the new files are stored to <filename>-rebuilt.
+
 
 

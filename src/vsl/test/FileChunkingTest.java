@@ -17,6 +17,8 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 
 import java.util.Iterator;
@@ -97,12 +99,18 @@ public class FileChunkingTest {
 			System.exit(1);
 		}
 		Integer cmdint = (Integer) cmds.get(cmd);
+		if (cmdint == null)
+		{
+			System.err.println("Expected args: <cmd> <dbfile> ....\n"+
+							"\t cmd = create, compare, list, read");
+			System.exit(1);
+		}
 		switch(cmdint)
 		{
 			case 1:			create(args); 			break;
+			case 3:			compare(args);			break;
 			/*
 			case 2:			list();					break;
-			case 3:			unimplemented();		break;
 			case 4:			reconstruct(args);		break;
 			*/
 		}
@@ -194,6 +202,125 @@ public class FileChunkingTest {
 			System.exit(1);
 		}
 	}
+	
+	
+	
+	/**
+	 *  read off args and compare a file in DB with a new version passed as just 
+	 *  a filename.
+	 *
+	 *  TODO:
+	 *  - write comparison code
+	 *  - Split method: read args + input/chunk file
+	 *  				compare chunks in a seperate method
+	 */
+	public static void compare(String[] args)
+	{
+		Vector<vslFileDataChunk> oldChunks = null;
+		Vector<vslFileDataChunk> newChunks = null;
+		if (args.length < 3)
+		{
+			System.err.println("Missings args: compare <source_version> <new_version>");
+			System.exit(1);
+		}
+		source = args[1];
+		String newver = args[2];
+		vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
+		try {
+			oldChunks = handler.chunkFile(source);	
+			System.out.println("Got " + oldChunks.size() + 
+					" chunks from source file: " + source);
+			promptRebuild("original version", source, oldChunks);
+		}
+		catch(FileNotFoundException e)
+		{
+			System.err.println("Cannot read from file '" + source + "'");
+			System.err.println("Excption: " + e.toString());
+			e.printStackTrace();
+			System.exit(1);
+		}
+		try {
+			newChunks = handler.reChunkFile(newver, oldChunks);	
+			System.out.println("Got " + newChunks.size() + 
+					" NEW chunks when comparing " + newver + " to source file: " + source);
+			newChunks.addAll(oldChunks);
+			promptRebuild("new version", newver, newChunks);
+		}
+		catch(Exception e)
+		{
+			System.err.println("Exception trying to Rechunk file '" + newver + "'");
+			System.err.println("Excption: " + e.toString());
+			e.printStackTrace();
+			System.exit(1);
+		}
+
+	}
+
+
+	private static void promptRebuild(String type, String filename, Vector<vslFileDataChunk> chunks)
+	{
+		System.out.print("Rebuild  " + type  + " file [Y/N]? ");
+		String inLine = getLine();
+		if (inLine == null || ! inLine.toLowerCase().equals("y")) 
+		{
+			return;
+		}
+		System.out.print("Postfix to use [Default:'-rebuilt']: ");
+		String postfix = getLine();
+		if (postfix == null || postfix.equals("") )
+		{
+			postfix = "-rebuilt";
+		}
+		String newFile = filename + postfix;
+		System.out.println("Hit enter to reconstruct file in: " + newFile);
+		getLine();
+		reBuild(newFile, chunks);
+	}
+
+	private static String getLine() 
+	{
+		InputStreamReader converter = new InputStreamReader(System.in);
+		BufferedReader in = new BufferedReader(converter); 
+		String inLine="";
+		try {
+			inLine = in.readLine();
+		}
+		catch(Exception e)
+		{
+			System.err.println("Error reading input.");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return inLine;
+	}
+
+	/**
+	 * Rebuild a file from some chunks.
+	 */
+	public static void reBuild(String outfile,  Vector<vslFileDataChunk> chunks)
+	{
+		/*
+		FileOutputStream fl = null;
+	 	BufferedOutputStream bf = null;
+		try {
+			fl = new FileOutputStream(outfile);
+			bf = new BufferedOutputStream(fl);
+		}
+		catch(FileNotFoundException e)
+		{
+			System.err.println("Cannot write to file '" + outfile + "'");
+			System.err.println("Excption: " + e.toString());
+			System.exit(1);
+		}*/
+		try {
+			vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
+			handler.unchunk(outfile, chunks);
+		} catch (Exception e) {
+			System.err.println("Caught exception: " + e.toString());
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
 
 	/**
 	 * Dump db entry to a file passed as third cmd line arg.
@@ -246,57 +373,5 @@ public class FileChunkingTest {
 	}
 	*/
 
-	/**
-	 *  read off args and compare a file in DB with a new version passed as just 
-	 *  a filename.
-	 *
-	 *  TODO:
-	 *  - write comparison code
-	 *  - Split method: read args + input/chunk file
-	 *  				compare chunks in a seperate method
-	 *
-	public static void compare(String[] args)
-	{
-		Vector<vslFileDataChunk> oldChunks = null;
-		Vector<vslFileDataChunk> newChunks = null;
-		if (args.length < 4)
-		{
-			System.err.println("Missings args: compare <dbfile> <dbentry> <new_version>");
-			System.exit(1);
-		}
-		source = args[2];
-		String newver = args[3];
-		vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
-		try {
-			newChunks = handler.chunkFile(newver);	
-		}
-		catch(FileNotFoundException e)
-		{
-			System.err.println("Cannot read from file '" + newver + "'");
-			System.err.println("Excption: " + e.toString());
-			System.exit(1);
-		}
-		try {
-			try {
-				db = MMStore.readMap(dbfile);
-			} catch (FileNotFoundException e) {
-				System.err.println("Database " + dbfile + " does not exist. Exiting.");
-				System.exit(1);
-			}
-			oldChunks = (Vector<vslFileDataChunk>) db.get(source);
-			if (oldChunks == null)
-			{
-				System.err.println("No entry corresponding to '" + source 
-						+ "' found in dbfile '" + dbfile + "'. Exiting.");
-				System.exit(1);
-			}
-			System.out.println("old chunks: " + oldChunks);
-		} catch (Exception e) {
-			System.err.println("Caught exception: " + e.toString());
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
-	*/
 
 }
