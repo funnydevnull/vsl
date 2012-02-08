@@ -34,7 +34,7 @@ public class vslFileDataChunk extends vslChunk implements Comparable<vslFileData
 		extra.chunkNum = num;
 		//chunkSize = len;
 		extra.tokenSize = token;
-		setData(data);
+		setData(data, offset, len);
 		setTokens();
 	}
 
@@ -96,6 +96,11 @@ public class vslFileDataChunk extends vslChunk implements Comparable<vslFileData
 	public int getChunkNum()
 	{
 		return extra.chunkNum;
+	}
+
+	public void setChunkNum(int newNum)
+	{
+		extra.chunkNum = newNum;
 	}
 
 

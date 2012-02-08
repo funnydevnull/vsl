@@ -8,6 +8,7 @@ public class vslLog {
 	public static final int NORMAL = 2;
 	public static final int VERBOSE = 3;
 	public static final int DEBUG = 4;
+	public static final int PERF = 5;
 
 
 	/**
@@ -22,6 +23,8 @@ public class vslLog {
 	{
 		System.out.println(msg);
 	}
+	
+	
 
 	public static void logException(Exception e)
 	{
