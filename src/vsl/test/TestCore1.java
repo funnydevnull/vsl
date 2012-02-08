@@ -100,31 +100,21 @@ public class TestCore1  {
 		throws Exception
     {	
 		int nBytes = 100;
-		try {
+		/*	try {
 			nBytes = new Integer(args[2]);
 		} catch (NumberFormatException nfe) {
 			System.err.println("Second argument to store must be a positive integer: " + args[3]);
 			System.exit(1);
-		}
-		// Hedeer: see my comment in VSL, if we access backend through VSL only then
-		// that would change this code to:
-		//   myVsl = new vsl();
-		//   myVsl.loadBackend(args[1]);
-		// otherwise we need to attach this backend to the vsl after initializing it
-		// UPDATE:  THESE COMMENTS ARENT AS RELEVANT, SEE THE SETTER SECTION IN VSL
+			}*/
 		vslMMBackend db = vslMMBackend.readMap(args[1]);
 		db.printMap(nBytes);
 	}
-
+ 
 	void update(String[] args)
 		throws Exception
 	{
-		// load up the entry_id
-		// chunk the new data or new file
-		// add the file to given entry
 	        // TestCore1 update <db_file> <entry_id> <new_data> <chunks>
-		
-		// technically this is incorrect since vsl needs a config file
+	        // technically this is incorrect since vsl needs a config file
 	        myVsl = new vsl(args[1]);
 		vslMMBackend db = vslMMBackend.readMap(args[1]);
 		myVsl.setBackend(db);
@@ -148,14 +138,11 @@ public class TestCore1  {
 			chunk.setDataExtra(extra);
 			data.addChunk(chunk);
 			}
-		//vslID entryID = db.getKey(args[2]);
-		//entryID.setID(args[2]);
 		vslID entryID = new vslID();
 		entryID.setID(args[2]);
-		vslID id = myVsl.updateEntry(entryID, data);
-		System.out.println("Found id: " + id);
-		//myVsl.debugShow();
-		//myVsl.save();
+		myVsl.updateEntry(entryID, data);
+		myVsl.debugShow();
+		myVsl.save();
 	}
 
 	/*  -------------- Inner Classes ---------------- */

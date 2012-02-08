@@ -32,16 +32,16 @@ public class vsl {
 	{
 		vslEntry entry = new vslEntry(newEntry);
 		entry.store();
-		//storeEntry(entry)
 		return entry.getID();
 	}
 	
-	public vslID updateEntry(vslID entryId, vslDataType updateEntry)
+	public vslID updateEntry(vslID entryId, vslDataType updateData)
 		throws vslStorageException
 	{
-		vslEntry entry = new vslEntry(entryId);
-		//System.out.println("updateEntry()");	       
-		return entry.getID();
+		vslEntry select_entry = new vslEntry(entryId);
+		select_entry.addVersion(updateData, null);
+		select_entry.store();
+		return select_entry.getID();
 	}
 
 	/* -------------- PUBLIC UTILITY METHODS ------------------- */
@@ -51,22 +51,6 @@ public class vsl {
 	public void setBackend(vslBackend b) {
 		backend = b;
 	}
-
-	/*  THIS SECTION IS INTENTIONALLY LEFT HERE PENDING DISCUSSION WITH SHEER REGARDING
-	     HOW TO ATTACH A BACKEND THAT'S INITIALIZED (VERSUS HAVING VSL INITIALIZE IT)
-	  public void loadBackend(String file)
-	{
-		// Hedeer: not sure if we want this behavior but makes sense to me
-		// it makes sense and I would rather that in TestCore1 we don't instantiate
-		// a backend but get to it through this function (so everything goes through vsl)
-		//
-		// obviously having a file as an argument is specific to this implementation
-		// we should have a general way of loading up an existing backend into the vsl
-		// maybe it's more correct to have the backend initialized (the way it is now in TestCore1 read)
-		// then connect it to the vsl as need be...if that's the case there should at least 
-		// be a backend setter in vsl()
-		backend.readMap(file);
-		}*/
 
 	public void save()
 		throws vslStorageException

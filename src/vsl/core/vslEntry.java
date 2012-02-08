@@ -1,6 +1,7 @@
 package vsl.core;
 
 import java.util.Vector;
+import java.util.Iterator;
 
 import vsl.core.types.vslDate;
 import vsl.core.types.vslHash;
@@ -27,7 +28,6 @@ public class vslEntry {
 	public vslEntry(vslID entryID) 
 		throws vslStorageException
 	{
-	    //System.out.println("in vslEntry constructor");
 		id = entryID;
 		load();
 	}
@@ -41,8 +41,12 @@ public class vslEntry {
 	}
 
 
+	public void addVersion(vslDataType newEntry, Vector<vslVersion> prev) {
+		vslVersion newver = new vslVersion(prev, null, newEntry.getNewChunks());
+		versions.add(newver);
+	}
 
-	/* ------------- STORAGE INTERFACE ----------------- */
+	/* ------------- STORAGE INTERFACE ----------------- */     
 
 	/**
 	 * Load this entry from the backend.
@@ -50,18 +54,24 @@ public class vslEntry {
 	void load()
 		throws vslStorageException
 	{
-	    vslLog.log(vslLog.DEBUG, "in vslEntry.load() using hashcode: " + id.hashCode());
 	    Vector temp = null;	   
 	    vslFuture res = vsl.load(id);
 	    if (!res.success()) {
-		    // failed to load id, raise exception?
+			// failed to load id, raise exception
 			vslLog.log(vslLog.ERROR, "failed to load id " + id);
 			return;
 	    }		
 	    if(res.awaitUninterruptedly()) {	      
 			temp = res.getEntries();
-	    }	    
-	    vslLog.log(vslLog.DEBUG, "entry size: " + temp.size());
+	    }
+	    Iterator vh_itr = temp.iterator();
+	    while(vh_itr.hasNext()) {
+		vslVersionHeader vh = (vslVersionHeader) vh_itr.next();
+		Vector<vslVersion> prev = new Vector<vslVersion>();
+		// use null prev for now...
+		vslVersion v = new vslVersion(prev, vh.id);		     
+		versions.add(v);
+	    }
 	}
 
 
@@ -84,15 +94,18 @@ public class vslEntry {
 		{
 			versionHeaders.add(ver.getHeader());
 		}
-		vslFuture res = vsl.create(versionHeaders);
-		if(res.awaitUninterruptedly())
-		{
-			id = res.getNewEntryID();
-		}
-		else
-		{
-			vslLog.log(0, "Error storing Entry: " + res.getErrMsg());
-			throw new vslStorageException(res.getErrMsg());
+		// If we don't already have an id in the backend then use create() otherwise
+		// use add()
+		if (id == null) {
+			vslFuture res = vsl.create(versionHeaders);
+			if(res.awaitUninterruptedly()) {
+			       id = res.getNewEntryID();
+			} else {
+				vslLog.log(0, "Error storing Entry: " + res.getErrMsg());
+				throw new vslStorageException(res.getErrMsg());
+		       }
+		} else {	
+			vsl.add(id, versionHeaders);
 		}
 	}
 
