@@ -31,6 +31,7 @@ public class vslVersion {
 	 * previous versions.
 	 */
 	private Vector<vslVersion> prev = new Vector<vslVersion>();
+	private boolean newVersion = true;
 
 
 	/* ---------------- CONSTRUCTORS -----------------------*/
@@ -174,6 +175,9 @@ public class vslVersion {
 		return header;
 	}
 
+	public boolean isNew() {
+		return this.newVersion;
+	}
 
 
 	/**

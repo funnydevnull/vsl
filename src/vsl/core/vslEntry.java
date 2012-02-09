@@ -69,7 +69,8 @@ public class vslEntry {
 		vslVersionHeader vh = (vslVersionHeader) vh_itr.next();
 		Vector<vslVersion> prev = new Vector<vslVersion>();
 		// use null prev for now...
-		vslVersion v = new vslVersion(prev, vh.id);		     
+		vslVersion v = new vslVersion(prev, vh.id);
+		// load up data for that version from the backend
 		versions.add(v);
 	    }
 	}
@@ -81,7 +82,8 @@ public class vslEntry {
 	void store()
 		throws vslStorageException
 	{
-		storeNewVersions();
+		Vector<vslVersionHeader> versionHeaders = new Vector<vslVersionHeader>();
+		versionHeaders = storeNewVersions();
 		if (!versionsStored())
 		{
 			vslLog.log(0, "Attempt to store Entry without first storing versions.");
@@ -89,11 +91,11 @@ public class vslEntry {
 				new vslStorageException("Trying to store Entry with unstored Versions.");
 			throw vse;
 		}
-		Vector<vslVersionHeader> versionHeaders = new Vector<vslVersionHeader>();
+		/*Vector<vslVersionHeader> versionHeaders = new Vector<vslVersionHeader>();
 		for(vslVersion ver: versions)
 		{
 			versionHeaders.add(ver.getHeader());
-		}
+			}*/
 		// If we don't already have an id in the backend then use create() otherwise
 		// use add()
 		if (id == null) {
@@ -112,17 +114,21 @@ public class vslEntry {
 
 	/**
 	 * Stores all the data assocated with any new version as well as the version info.
+	 * returns a vector of versionHeaders for new versions
 	 */
-	private void storeNewVersions()
+	private Vector<vslVersionHeader> storeNewVersions()
 		throws vslStorageException
 	{
+	        Vector<vslVersionHeader> vh = new Vector<vslVersionHeader>();
 		for (vslVersion ver: versions)
 		{
-			if (ver.getID() == null)
+		    if (ver.getID() == null)
 			{
 				ver.store();
+				vh.add(ver.getHeader());
 			}
 		}
+	        return vh;
 	}
 
 

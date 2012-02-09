@@ -35,7 +35,7 @@ public class vsl {
 		return entry.getID();
 	}
 	
-	public vslID updateEntry(vslID entryId, vslDataType updateData)
+        public vslID updateEntry(vslID entryId, vslDataType updateData)
 		throws vslStorageException
 	{
 		vslEntry select_entry = new vslEntry(entryId);
