@@ -100,14 +100,12 @@ public class TestCore1  {
 		throws Exception
     {	
 		int nBytes = 100;
-		/*	try {
-			nBytes = new Integer(args[2]);
-		} catch (NumberFormatException nfe) {
-			System.err.println("Second argument to store must be a positive integer: " + args[3]);
-			System.exit(1);
-			}*/
-		vslMMBackend db = vslMMBackend.readMap(args[1]);
-		db.printMap(nBytes);
+		try {
+		    vslMMBackend db = vslMMBackend.readMap(args[1]);
+		    db.printMap(nBytes);
+		} catch (Exception e) {
+		    System.err.println("Usage: TestCore1 read <db_file> [id]");
+		}
 	}
  
 	void update(String[] args)
@@ -141,7 +139,6 @@ public class TestCore1  {
 		vslID entryID = new vslID();
 		entryID.setID(args[2]);
 		myVsl.updateEntry(entryID, data);
-		myVsl.debugShow();
 		myVsl.save();
 	}
 

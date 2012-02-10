@@ -91,11 +91,14 @@ public class vslEntry {
 				new vslStorageException("Trying to store Entry with unstored Versions.");
 			throw vse;
 		}
-		/*Vector<vslVersionHeader> versionHeaders = new Vector<vslVersionHeader>();
+
+		/* Sheer confirm delete
+		Vector<vslVersionHeader> versionHeaders = new Vector<vslVersionHeader>();
 		for(vslVersion ver: versions)
 		{
 			versionHeaders.add(ver.getHeader());
 			}*/
+
 		// If we don't already have an id in the backend then use create() otherwise
 		// use add()
 		if (id == null) {
