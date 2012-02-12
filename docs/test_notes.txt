@@ -1,11 +1,36 @@
-To run/compile test classes:
+BUILDING
+========
+
+The source can now be built using Gradle:
+
+From the root dir:
+
+gradle assemble
+
+Some info on gradle can be found:
+
+http://gradle.org/docs/current/userguide/tutorial_java_projects.html
+
+This builds a jar file in vsl/build/lib/vsl-VERSION.jar.  By default this jar will run TestCore1.
+
+It seems that 'java' (as opposed to javac) does not use the classpath so it has to be called with:
+
+java -cp $CLASSPATH
+
+
+CONFIGURATION
+=============
+
+VSL uses a config file vsl.conf which is located in config/vsl.conf.  
+
+
+TESTING
+=======
+
+To run test:
 
 SerializingTest:
 ================
-
-From vsl/src dir:
-
-javac vsl/test/SerializingTest.java
 
 To run it:
 
@@ -29,15 +54,15 @@ Basic test of core functionality.
 
 To run try (last two args optional):
 
-java vsl.test.TestCore1 store <filename> [data_string] [numChunks]
+java vsl.test.TestCore1 store <config_file> [data_string] [numChunks]
 
 Example: 
 
-java vsl.test.TestCore1 store vslDB howdy 12
+java vsl.test.TestCore1 store config/vsl.cfg howdy 12
 
 will generate an Entry with one Version and numChunks data chunks (there's a
 default value) and store them in a vslMMBackend which stores itself to
-filename.  NOTE: will OVERWRITE file at <filename>!!
+filename.  NOTE: the db file is specifyied in the config file.
 
 To read back in and print out the file:
 
@@ -124,7 +149,7 @@ Chunking
 
 Chunk a file (in this case vsl_deisng_notes-1.tex) and store in the vsl DB-file mydb:
 
-java vsl.test.FileChunkingTest create mydb  ../test/input/version/vsl_design_notes-1.tex
+java vsl.test.FileChunkingTest create config/vsl.cfg  ../test/input/version/vsl_design_notes-1.tex
 
 NOTE: chunking params currently hard-coded (i.e. size of chunk and begin
 token).  Should make them args.
@@ -136,7 +161,7 @@ Since VSL doesn't yet support reading out entries we can't directly read or
 reconstruct a file but instead we can access it using the printMap method in
 the vslMMBackend but this requires using the TestCore1 class.
 
-java vsl.test.TestCore1 read mydb [numBytes]
+java vsl.test.TestCore1 read config/vsl.cfg [numBytes]
 
 By default this method only shows the first 100 bytes of each data entry but by
 providing an arg this can be increased.

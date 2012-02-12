@@ -7,10 +7,12 @@ package vsl.backends.multimap;
 //import vsl.debug.DebuggingObjectOutputStream;
 import vsl.debug.DebuggingObjectOutputStream2;
 
+import vsl.core.vsl;
 import vsl.core.vslLog;
 import vsl.core.vslBackend;
 import vsl.core.vslFuture;
 import vsl.core.vslStorageException;
+import vsl.core.vslConfigException;
 
 import vsl.core.data.vslBackendData;
 import vsl.core.util.vslBackendDataUtils;
@@ -28,31 +30,55 @@ import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
+import java.io.File;
+
 
 public class vslMMBackend implements vslBackend, Serializable {
 
+	/* --------------- CONFIG PARAMS ---------------------- */
+
+	private final static String DBFILE = "backends.multimap.vslMMBackend.dbfile";
+
+
 	// for now use MultiHashMap implementation as backend
-	private HashMap<vslID, Vector<? extends vslBackendData> > storage = 
-								new HashMap<vslID, Vector<? extends vslBackendData> >();
+	private HashMap<vslID, Vector<? extends vslBackendData> > storage = null;
 	private Random randGen;
 	private String dbname = null;
 
 	/**
-	 * Should only be used to create a _new_ MMBackend.  For an existing file
-	 * should use the static method to read from MMBackend.
 	 */
-	public vslMMBackend(String dbfile) 
-		throws vslStorageException
+	public vslMMBackend() 
+		throws vslConfigException, vslStorageException
 	{
-		dbname = dbfile;
+		dbname = vsl.getConfig().getString(DBFILE);
 		init();
 	}
+	
+	
+	/**
+	 * Used for debugging by creating a vslMMBackend outside of vsl.
+	 */
+	public vslMMBackend(String dbname) 
+		throws vslConfigException, vslStorageException
+	{
+		this.dbname = dbname;
+		init();
+	}
+
 
 	public void init()
 		throws vslStorageException
 	{
 		Date now = new Date();
 		randGen = new Random(now.getTime());
+		// initialize the DB from the file or from scratch
+		if (dbname != null && new File(dbname).exists()) {
+			readMap();
+		}
+		else
+		{
+			storage = new HashMap<vslID, Vector<? extends vslBackendData> >();
+		}
 	}
 
 	public void close()
@@ -61,7 +87,7 @@ public class vslMMBackend implements vslBackend, Serializable {
 		try {
 			writeMap();
 			//debugWriteMap();
-		} catch (IOException e) {
+		} catch (vslStorageException e) {
 			vslStorageException vse = new vslStorageException(
 					"IO Exception Writing MMap to file: " + e.toString());
 			e.printStackTrace();
@@ -182,42 +208,10 @@ public class vslMMBackend implements vslBackend, Serializable {
 	}
 
 
-	/* --------------- Public functions ------------------- */
 
-	public static vslMMBackend readMap(String file)
-		throws IOException, ClassNotFoundException
-	{
-		FileInputStream fis = new FileInputStream(file);
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		vslMMBackend fmap = (vslMMBackend) ois.readObject();
-		ois.close();
-		return fmap;
-    }
+	/* --------------------- Public Utility Functions ------------------- */
 
-	public void writeMap()
-		throws IOException
-	{
-		FileOutputStream fos = new FileOutputStream(dbname);
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		oos.writeObject(this);
-		oos.close();
-	}
-	
-	public void debugWriteMap()
-		throws IOException
-	{
-		FileOutputStream fos = new FileOutputStream(dbname);
-		//ObjectOutputStream oos = new ObjectOutputStream(fos);
-		DebuggingObjectOutputStream2 oos = new DebuggingObjectOutputStream2(fos);
-		try {
-			oos.writeObject(this);
-		} catch (Exception e) {
-		  throw new RuntimeException(
-     		 "Serialization error. Path to bad object: " 
-          	+ oos.getStack(), e);
-		}
-		oos.close();
-	}
+
 
 	public void printMap()
 	{
@@ -242,6 +236,62 @@ public class vslMMBackend implements vslBackend, Serializable {
 			System.out.println("===============================");
 		}
 	}
+	
+	
+	public void debugWriteMap()
+		throws IOException
+	{
+		FileOutputStream fos = new FileOutputStream(dbname);
+		//ObjectOutputStream oos = new ObjectOutputStream(fos);
+		DebuggingObjectOutputStream2 oos = new DebuggingObjectOutputStream2(fos);
+		try {
+			oos.writeObject(this);
+		} catch (Exception e) {
+		  throw new RuntimeException(
+     		 "Serialization error. Path to bad object: " 
+          	+ oos.getStack(), e);
+		}
+		oos.close();
+	}
+
+
+	/* --------------- Private read/write DB functions ------------------- */
+
+	private void readMap()
+		throws vslStorageException
+	{
+		try {
+			FileInputStream fis = new FileInputStream(dbname);
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			//vslMMBackend fmap = (vslMMBackend) ois.readObject();
+			storage = (HashMap<vslID, Vector<? extends vslBackendData>>) ois.readObject();
+			ois.close();
+		} 
+		catch (Exception e)
+		{
+			vslLog.log(vslLog.ERROR, "Error trying to read vslMMBackend database: " + 
+					e.toString());
+			throw new vslStorageException(e);
+		}
+    }
+
+	private void writeMap()
+		throws vslStorageException
+	{
+		try {
+			FileOutputStream fos = new FileOutputStream(dbname);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(storage);
+			oos.close();
+		} 
+		catch (Exception e)
+		{
+			vslLog.log(vslLog.ERROR, "Error trying to read vslMMBackend database: " + 
+					e.toString());
+			throw new vslStorageException(e);
+		}
+	}
+	
 
 	/* --------------- PRIVATE UTILITY METHODS ------------ */
 

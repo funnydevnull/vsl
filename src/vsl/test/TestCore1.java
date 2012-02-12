@@ -4,6 +4,7 @@ package vsl.test;
 import vsl.core.vsl;
 import vsl.core.vslChunk;
 import vsl.core.vslDataType;
+import vsl.core.vslException;
 import vsl.core.vslStorageException;
 import vsl.core.types.vslID;
 
@@ -58,7 +59,7 @@ public class TestCore1  {
 	}
 
 	void store(String[] args)
-		throws vslStorageException
+		throws vslException
 	{
 		String base = "hey ";
 		int nChunks = 5;
@@ -101,21 +102,23 @@ public class TestCore1  {
     {	
 		int nBytes = 100;
 		try {
-		    vslMMBackend db = vslMMBackend.readMap(args[1]);
+		    //vslMMBackend db = vslMMBackend.readMap(args[1]);
+		    vslMMBackend db = new vslMMBackend(args[1]);
 		    db.printMap(nBytes);
 		} catch (Exception e) {
 		    System.err.println("Usage: TestCore1 read <db_file> [id]");
+			e.printStackTrace();
 		}
 	}
  
 	void update(String[] args)
 		throws Exception
 	{
-	        // TestCore1 update <db_file> <entry_id> <new_data> <chunks>
-	        // technically this is incorrect since vsl needs a config file
-	        myVsl = new vsl(args[1]);
-		vslMMBackend db = vslMMBackend.readMap(args[1]);
-		myVsl.setBackend(db);
+	    // TestCore1 update <db_file> <entry_id> <new_data> <chunks>
+	    // technically this is incorrect since vsl needs a config file
+	    myVsl = new vsl(args[1]);
+		//vslMMBackend db = vslMMBackend.readMap(args[1]);
+		//myVsl.setBackend(db);
 		String base = new String(args[3]);
 		int nChunks = 5;
 		try {

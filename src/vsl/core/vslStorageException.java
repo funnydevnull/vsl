@@ -8,4 +8,9 @@ public class vslStorageException extends vslException {
 	{
 		super(err);
 	}
+	
+	public vslStorageException(Exception e) {
+		super(e);
+	}
+
 }

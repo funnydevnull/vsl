@@ -15,11 +15,14 @@ import vsl.backends.multimap.vslMMBackend;
 public class vsl {
 
 	private static vslBackend backend=null;
+
+	private static vslConfig config = null;
+
 	private List<String> entries;
 	//private Logger log;
 	
 	public vsl(String configFile) 
-		throws vslStorageException
+		throws vslException
 	{
 		init(configFile);
 	}
@@ -35,13 +38,18 @@ public class vsl {
 		return entry.getID();
 	}
 	
-        public vslID updateEntry(vslID entryId, vslDataType updateData)
+    public vslID updateEntry(vslID entryId, vslDataType updateData)
 		throws vslStorageException
 	{
 		vslEntry select_entry = new vslEntry(entryId);
 		select_entry.addVersion(updateData, null);
 		select_entry.store();
 		return select_entry.getID();
+	}
+
+
+	public static vslConfig getConfig() {
+		return config;
 	}
 
 	/* -------------- PUBLIC UTILITY METHODS ------------------- */
@@ -122,11 +130,30 @@ public class vsl {
 	/* ------------- PRIVATE UTILITY METHODS -------------- */
 	
 	private void init(String configFile)
-		throws vslStorageException
+		throws vslException
 	{
+		config = new vslConfig(configFile);
+
+		// init logging first
+		vslLog.init(config);
+
+		// init the backend
+		Class backendClass = null;
+		try {
+			backendClass =  Class.forName(config.getString(config.BACKEND));
+			backend = (vslBackend) backendClass.newInstance();
+		}
+		catch (Exception e)
+		{
+			vslLog.log(vslLog.ERROR, 
+					"Could not generate backend from class name: " +	
+					config.getString(config.BACKEND));	
+			throw new vslConfigException(e);
+		}
+
 		// just for testing -- eventually we should load this configurably
 		// and the configFile param should be read to get the DB name
-		backend = new vslMMBackend(configFile);
+		//backend = new vslMMBackend(configFile);
 	}
 
 

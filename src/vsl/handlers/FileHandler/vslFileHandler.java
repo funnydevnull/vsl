@@ -1,7 +1,9 @@
 package vsl.handlers.FileHandler;
 
 import vsl.core.vslException;
+import vsl.core.vslConfigException;
 import vsl.core.vslLog;
+import vsl.core.vslConfig;
 
 import vsl.handlers.FileHandler.vslFileDataChunk;
 import vsl.handlers.FileHandler.byteUtils.ByteDLL;
@@ -38,15 +40,28 @@ import java.nio.ByteBuffer;
  */
 
 public class vslFileHandler {
-	
+
+
+	/* --------------- CONFIG PARAMETERS ------------------------ */
+
+	private final static String CHUNKSIZE = "handlers.FileHandler.chunksize";
+	private final static String TOKENSIZE = "handlers.FileHandler.tokensize";
 	
 	private int chunkSize = -1;
 	private int tokenSize = -1;
 
 
-	public vslFileHandler(int chunkSize, int tokenSize) {
-		this.chunkSize = chunkSize;
-		this.tokenSize = tokenSize;
+	public vslFileHandler(vslConfig config) 
+		throws vslConfigException
+	{
+		this.chunkSize = config.getInt(CHUNKSIZE);
+		this.tokenSize = config.getInt(TOKENSIZE);
+		if (chunkSize < 0 || tokenSize < 0 || tokenSize > chunkSize) {
+			String err = "Invalid token or chunk sizes: TokenSize [" + tokenSize + 
+					"], chunkSize [" + chunkSize + "].";
+			vslLog.log(vslLog.ERROR, err);
+			throw new vslConfigException(err);
+		}
 	}
 
 

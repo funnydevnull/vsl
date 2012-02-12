@@ -1,0 +1,18 @@
+apply plugin: 'java'
+
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/vsl'
+        }
+    }
+}
+
+jar {
+	version = 0.01
+    manifest {
+        attributes("Main-Class": "vsl.test.TestCore1", "Implementation-Title": "vsl",'Implementation-Version': version)
+    }
+}
+

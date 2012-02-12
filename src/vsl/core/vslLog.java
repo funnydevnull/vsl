@@ -1,6 +1,22 @@
 package vsl.core;
 
+
+
+
+
+import java.util.HashMap;
+
+
+
 public class vslLog {
+
+
+	/* ----------- CONFIG STRINGS ------------- */
+
+	public static final String LOGFILE = "logger.vslLog.logfile";
+	public static final String LOGLEVEL = "logger.vslLog.level";
+
+	/* ------------ LOGLEVELS ----------------- */
 
 	public static final int FATAL = -1;
 	public static final int ERROR = 0;
@@ -11,6 +27,11 @@ public class vslLog {
 	public static final int PERF = 5;
 
 
+
+	private static HashMap<String, Integer> levels = null;
+
+	private static int logLevel = WARNING;
+
 	/**
 	 * This class is a singleton and shouldn't be initialized.
 	 */
@@ -19,9 +40,32 @@ public class vslLog {
 
 	}
 
+
+	static void init(vslConfig config)
+		throws vslConfigException
+	{
+		levels = new HashMap<String, Integer>();
+		levels.put("fatal", new Integer(FATAL));
+		levels.put("error", new Integer(ERROR));
+		levels.put("warning", new Integer(WARNING));
+		levels.put("normal", new Integer(NORMAL));
+		levels.put("verbose", new Integer(VERBOSE));
+		levels.put("debug", new Integer(DEBUG));
+		levels.put("perf", new Integer(PERF));
+		String debugLevel = config.getString(LOGLEVEL);
+		Integer logInt =  null;
+		if (debugLevel != null 
+				&& (logInt = levels.get(debugLevel.toLowerCase())) != null )
+		{
+			logLevel = logInt.intValue();
+		}
+	}
+
 	public static void log(int level, String msg)
 	{
-		System.out.println(msg);
+		if (level <= logLevel) {
+			System.out.println(msg);
+		}
 	}
 	
 	

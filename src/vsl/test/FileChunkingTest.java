@@ -2,7 +2,9 @@ package vsl.test;
 
 //import vsl.test.MMStore;
 import vsl.core.vsl;
+import vsl.core.vslException;
 import vsl.core.vslStorageException;
+import vsl.core.vslConfigException;
 
 import vsl.handlers.FileHandler.vslFileHandler;
 import vsl.handlers.FileHandler.vslFileDataType;
@@ -51,8 +53,8 @@ public class FileChunkingTest {
 	//private static int tokenSize = 1000;
 	//private static int chunkSize = 10*1000;
 	//private static int tokenSize = 1000;
-	private static int chunkSize = 500;
-	private static int tokenSize = 50;
+	//private static int chunkSize = 500;
+	//private static int tokenSize = 50;
 	private static MMStore db;
 
 	private static String cmd;
@@ -63,7 +65,8 @@ public class FileChunkingTest {
 
 
 	private static vsl core;
-
+	private static vslFileHandler handler;
+	
 
 	public static void init()
 	{
@@ -73,10 +76,11 @@ public class FileChunkingTest {
 		cmds.put("reconstruct", new Integer(4));
 	}
 
-	public static void initVSL(String dbfile)
-		throws vslStorageException
+	public static void initVSL(String config)
+		throws vslException
 	{
-		core = new vsl(dbfile);
+		core = new vsl(config);
+		handler = new vslFileHandler(core.getConfig());
 	}
 
 
@@ -85,14 +89,15 @@ public class FileChunkingTest {
 		init();
 		if (args.length < 2)
 		{
-			System.err.println("Expected args: <cmd> <dbfile> ....\n"+
-							"\t cmd = create, compare, list, read");
+			System.err.println("Expected args: <cmd> <config_file> ....\n"+
+							"\t cmd = create, compare");
+			//	, list, read");
 			System.exit(1);
 		}
 		cmd = args[0].toLowerCase();
-		String dbfile = args[1];
+		String configFile = args[1];
 		try {
-			initVSL(dbfile);
+			initVSL(configFile);
 		} catch (Exception e) {
 			System.err.println("Caught exception: " + e.toString());
 			e.printStackTrace();
@@ -156,7 +161,8 @@ public class FileChunkingTest {
 		}
 	}*/
 
-	
+
+
 	/**
 	 * Populate db entry from a file passed as second arg.
 	 */
@@ -172,13 +178,14 @@ public class FileChunkingTest {
 		try {
 			/*
 			try {
+					"Invalid token or chunk sizes: TokenSize [" + tokenSize + 
+					"],chunkSize [" + chunkSize + "].";
 				db = MMStore.readMap(dbfile);
 			} catch (FileNotFoundException e) {
 				System.out.println("File " + dbfile + " does not exist.  Will create.");
 				db = new MMStore(dbfile);
 			}
 			*/
-			vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
 			chunks = handler.chunkFile(source);
 			vslFileDataType fileData = new vslFileDataType();
 			StringTokenizer st = new StringTokenizer(source, "/");
@@ -218,14 +225,14 @@ public class FileChunkingTest {
 	{
 		Vector<vslFileDataChunk> oldChunks = null;
 		Vector<vslFileDataChunk> newChunks = null;
-		if (args.length < 3)
+		if (args.length < 4)
 		{
-			System.err.println("Missings args: compare <source_version> <new_version>");
+			System.err.println("Missings args: compare <config_file> <source_version> <new_version>");
 			System.exit(1);
 		}
-		source = args[1];
-		String newver = args[2];
-		vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
+		source = args[2];
+		String newver = args[3];
+		//vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
 		try {
 			oldChunks = handler.chunkFile(source);	
 			System.out.println("Got " + oldChunks.size() + 
@@ -313,7 +320,7 @@ public class FileChunkingTest {
 			System.exit(1);
 		}*/
 		try {
-			vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
+			//vslFileHandler handler = new vslFileHandler(chunkSize, tokenSize);
 			handler.unchunk(outfile, chunks);
 		} catch (Exception e) {
 			System.err.println("Caught exception: " + e.toString());
