@@ -1,0 +1,6 @@
+*.sw?
+*~
+*.log
+*.class
+.gradle
+build

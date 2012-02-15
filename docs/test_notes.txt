@@ -1,22 +1,7 @@
 BUILDING
 ========
 
-The source can now be built using Gradle:
-
-From the root dir:
-
-gradle assemble
-
-Some info on gradle can be found:
-
-http://gradle.org/docs/current/userguide/tutorial_java_projects.html
-
-This builds a jar file in vsl/build/lib/vsl-VERSION.jar.  By default this jar will run TestCore1.
-
-It seems that 'java' (as opposed to javac) does not use the classpath so it has to be called with:
-
-java -cp $CLASSPATH
-
+See BUILD.txt.
 
 CONFIGURATION
 =============

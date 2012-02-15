@@ -16,3 +16,12 @@ jar {
     }
 }
 
+javadoc {
+	title = "Versioning Storage Layer"
+}
+
+task intJavaDoc(type: Javadoc) {
+	title = "Versioning Storage Layer"
+	options.showFromPrivate()
+}
+
