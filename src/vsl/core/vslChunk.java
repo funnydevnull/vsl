@@ -15,6 +15,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
 
+import java.util.Vector;
+
 public class vslChunk {
 
 	vslID		id;
@@ -26,6 +28,11 @@ public class vslChunk {
 
 	/* should this be a vslHash?? */
 	private byte[] chunkDigest;
+
+	/**
+	 * Whether or not the chunk's data has been loaded from the backend.
+	 */
+	private boolean dataLoaded = false;
 	
 	public vslChunk() {
 	}
@@ -44,13 +51,37 @@ public class vslChunk {
 	 *
 	 * @param	chunkData	A vslChunkData element read out of the backend storage system.
 	 */
-	vslChunk(vslChunkHeader header, vslChunkData chunkData)
+	private vslChunk(vslChunkHeader header, vslChunkData chunkData)
 	{
 		this.id = header.id;
+		this.headerExtra = header.extra;
+		fromChunkData(chunkData);
+		/*
 		this.hash = chunkData.hash;
 		this.createTime = chunkData.createTime;
 		this.dataExtra = chunkData.extra;
 		setData(chunkData.data);
+		dataLoaded = true;
+		*/
+	}
+
+
+	/**
+	 * Creates a chunk object representing chunkData stored in VSL's backend
+	 * but with only its header data populated (i.e. hash, create time, etc...
+	 * but not the actual data).
+	 *
+	 * @param	chunkHeader	The header item associated with this chunk (need to
+	 * 						read off the extra header info).
+	 *
+	 */
+	vslChunk(vslChunkHeader header)
+	{
+		this.id = header.id;
+		this.headerExtra = header.extra;
+		this.hash = header.hash;
+		this.createTime = header.createTime;
+		dataLoaded = false;
 	}
 	
 
@@ -71,22 +102,70 @@ public class vslChunk {
 		return header;
 	}
 	
-
+	/**
+	 * Store this chunk in the backend and set its id to the value assigned by the backend.
+	 *
+	 * @throws	vslStorageException	if there's an error storing the chunk.
+	 */
 	void store()
 		throws vslStorageException
 	{
 		vslFuture res = vsl.create(toChunkData());
-		if(res.awaitUninterruptedly())
+		if(res.awaitUninterruptedly().success())
 		{
 			id = res.getNewEntryID();
 		}
 		else
 		{
-			vslLog.log(0, "Error storing Chunk: " + res.getErrMsg());
+			vslLog.log(vslLog.ERROR, "Error storing Chunk: " + res.getErrMsg());
 			throw new vslStorageException(res.getErrMsg());
 		}
 	}
 
+
+	/**
+	 * Load the chunk (i.e. the chunkData) from the backend.  This method should only be called once
+	 * for each instance.  If called again it will do nothing.
+	 *
+	 * @throws	vslInputException	If this chunk does not have a valid id set.
+	 *
+	 * @throws	vslStorageException	If an entry with this chunks's ID cannot be
+	 * found in the backend or if it corresponds to an entry with more than one
+	 * data element.
+	 */
+	void load()
+		throws vslStorageException, vslInputException
+	{
+		if (dataLoaded) {
+			vslLog.log(vslLog.WARNING, "Calling vslChunk.load() on loaded chunk, doing nothing.");
+		}
+		if (id == null || !id.isValid() ) {
+			vslLog.log(vslLog.ERROR, "Calling chunk.load() on a vslChunk with null/invalid ID: " + id);
+			throw new vslInputException(
+					"Calling chunk.load() on a vslChunk with null/invalid ID: " + id);
+		}
+	    vslFuture res = vsl.load(id);
+	    if(res.awaitUninterruptedly().success()) {
+			Vector<vslChunkData> dataList = (Vector<vslChunkData>) res.getEntries();
+			if (dataList.size() != 1)
+			{
+				// failed to load id, raise exception
+				vslLog.log(vslLog.ERROR, 
+						"Backend has more or less than one item in this ID!. Failing.");
+				throw new vslStorageException( 
+						"Backend has more or less than one item in this ID!. Failing.");
+			}
+			fromChunkData(dataList.get(0));
+	    }
+		else
+		{
+			// failed to load id, raise exception
+			vslLog.log(vslLog.ERROR, "failed to load vslChunk with id " + id);
+			throw new vslStorageException("Could not find vslChunk with id: " + id);
+	    }
+		// set so we don't try to reload 
+		dataLoaded = true;
+	}
 
 	
 
@@ -108,6 +187,20 @@ public class vslChunk {
 	}
 	
 
+	/**
+	 * Populate this chunk using the data in chunkData.
+	 *
+	 * @param	chunkData	A vslChunkData containing a backend entry
+	 * corresponding to a fully populated chunk.
+	 */
+	private void fromChunkData(vslChunkData chunkData)
+	{
+		this.hash = chunkData.hash;
+		this.createTime = chunkData.createTime;
+		this.dataExtra = chunkData.extra;
+		setData(chunkData.data);
+		dataLoaded = true;
+	}
 
 	/* ---------------- OVERRIDABLE METHODS ----------------------- */
 
@@ -172,7 +265,8 @@ public class vslChunk {
 		System.arraycopy(newData, offset, data, 0, len);
 		return 0;
 	}
-	
+
+
 	public vslChunkDataExtra getDataExtra() {
 		// for testing purposes right now
 		return dataExtra;
@@ -180,6 +274,16 @@ public class vslChunk {
 	
 	public void setDataExtra(vslChunkDataExtra extra) {
 		dataExtra = extra;
+	}
+	/**
+	 * Whether or not the vslChunkData associated with this chunk is already loaded.
+	 *
+	 * @return	true if the chunk data associated with this chunk has
+	 * already been read out of the backend, else false.
+	 */
+	public boolean dataLoaded()
+	{
+		return dataLoaded;
 	}
 
 	public vslID getID() {

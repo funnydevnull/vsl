@@ -49,7 +49,7 @@ public class vslBackendDataUtils {
 			{
 				sb.append(v.extra.toString());
 			}
-			sb.append("]");
+			sb.append("], newInVersion=[").append(new Boolean(v.createdInVersion).toString()).append("]");
 		}
 		if (data instanceof vslChunkData) 
 		{

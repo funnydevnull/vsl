@@ -23,5 +23,7 @@ public class vslChunkHeader extends vslBackendData implements Serializable {
 	public vslHash hash = null;
 	public vslDate createTime = null;
 	public vslChunkHeaderExtra extra = null;
-	
+	/* whether or not this chunk was created for this version or was old. */
+	public boolean createdInVersion = false;
+
 }

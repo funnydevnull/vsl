@@ -10,9 +10,19 @@ import java.util.Comparator;
 import vsl.handlers.FileHandler.byteUtils.ByteComparator;
 
 /**
- * a byte doubly linked list built from a byte[] array.
+ * <pre>
+ * A byte doubly linked list built from a byte[] array.
  *
- * one direction traverses the sorted byte array (ord) while the other
+ * The purpose of this object is to allow fast searchs for a match on a byte
+ * array.  In principle we only need to go far enough down the array to ensure
+ * one or no matches.
+ *
+ * As a secondary speedup this class also uses a "prestruct" which is a
+ * 256x256x256 in-memory array which allows for quick elimination of matches by
+ * keying off the first three bytes.  This presort takes constant time
+ * irrespective of the amount of bytes in the array.
+ *
+ * One direction traverses the sorted byte array (ord) while the other
  * traverses each word (word). 
  *
  * For instance the words: heavy heart given gives hesse
@@ -32,7 +42,7 @@ import vsl.handlers.FileHandler.byteUtils.ByteComparator;
  *              |
  *             \/
  *             [s]-->[s]-->[e]
- *
+ * </pre>
  */
 public class ByteDLL {
 

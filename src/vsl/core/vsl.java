@@ -38,15 +38,22 @@ public class vsl {
 		return entry.getID();
 	}
 	
-    public vslID updateEntry(vslID entryId, vslDataType updateData)
-		throws vslStorageException
+    public vslEntry updateEntry(vslID entryId, vslDataType updateData)
+		throws vslStorageException, vslInputException
 	{
 		vslEntry select_entry = new vslEntry(entryId);
-		select_entry.addVersion(updateData, null);
+		select_entry.addVersion(updateData);
 		select_entry.store();
-		return select_entry.getID();
+		return select_entry;
 	}
 
+    public vslEntry getEntry(vslID entryId)
+		throws vslStorageException, vslInputException
+	{
+		vslEntry select_entry = new vslEntry(entryId);
+		select_entry.load();
+		return select_entry;
+	}
 
 	public static vslConfig getConfig() {
 		return config;
@@ -157,11 +164,11 @@ public class vsl {
 	}
 
 
-	private void storeEntry(vslEntry entry)
-		throws vslStorageException
-	{
+	//private void storeEntry(vslEntry entry)
+	//	throws vslStorageException
+	//{
 		
-	}
+	//}
 
 }
 

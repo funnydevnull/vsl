@@ -47,14 +47,23 @@ General
 - Or do we want to allow backends to override vslID?
 - Likewise vslHash needs to be thought of more carefully.
 
+- We should catch _ClassCastExceptions_ when reading out data from the
+  backend in case someone gives the vsl id.  Might be better to wrap
+  backend methods in more specific calls such as getVersionHeaders(),
+  getChunkHeaders(), etc...
+
+
+
+vslVesion
+---------
+- We don't currently implement an equals method which might be useful e.g. in
+  vslVersion.addNext() to make sure we don't add the same next version twice.
 
 
 
 
-
-
-Version Control
+Source Version Control
 ---------------
 
-- We should start including per-file versioning info (like CVS lets you do). Do
-  we automate this or do it by hand?
+- We should start including per-source-file versioning info (like CVS lets you
+  do). Do we automate this or do it by hand?

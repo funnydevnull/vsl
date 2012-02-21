@@ -29,12 +29,44 @@ public abstract class vslFuture {
 	}
 
 
-	/**
-	 * Implmentations should return true when a result is populated in the
-	 * future and sleep otherwise.
-	 */
-	public abstract boolean awaitUninterruptedly();
+	/* ------------ Implementation specific ----------------- */
 
+	/** 
+	 * Implmentations should return true when the future object 
+	 * is populated otherwise should return false.
+	 *
+	 * @return	True when future object is populated and ready, otherwise false.
+	 */	
+	protected abstract boolean futureIsReady();
+
+
+	/* ------------ General Access Methods  -------------------- */
+
+
+	public vslFuture awaitUninterruptedly() 
+	{
+		return awaitUninterruptedly(1000);
+	}
+
+	/**
+	 * Wait on this future to be ready, sleeping an interval sleepTime while waiting.
+	 *
+	 * @return	This future object (which should now be popualted).
+	 */	
+	public vslFuture awaitUninterruptedly(long sleepTime) 
+	{
+		while (!futureIsReady())
+		{
+			try {
+				Thread.sleep(sleepTime);
+			}
+			catch(InterruptedException e)
+			{
+				vslLog.log(vslLog.ERROR, "vslFuture woken while trying to sleep");
+			}
+		}
+		return this;
+	}
 
 	/* ------------- RESPONSE PROBE METHODS ---------------------- */
 	
@@ -77,11 +109,11 @@ public abstract class vslFuture {
 	/**
 	 * @return	True if the operation is complete.  This is a non-blocking
 	 * version of awaitUninterruptedly().
-	 */
+	 *
 	public boolean isReady()
 	{
 		return ready;
-	}
+	}*/
 
 
 	/* ---------------- BACKEND METHODS -------------------- */

@@ -8,34 +8,43 @@ CONFIGURATION
 
 VSL uses a config file vsl.conf which is located in config/vsl.conf.  
 
+-----------------------------------------------------------------------------------------------
 
-TESTING
-=======
-
-To run test:
-
-SerializingTest:
-================
-
-To run it:
-
-java vsl.test.SerializingTest put mykey myval
-java vsl.test.SerializingTest put mykey2 myval2
-
-then 
-
-java vsl.test.SerializingTest read 
-
-If we use MultiValueMap from apache need to include classpath:
-
-javac -cp .:../lib/commons-collections-3.2.1.jar  vsl/test/SerializingTest.java 
-
-
-
+=========
 TestCore1
 =========
 
-Basic test of core functionality.
+Basic test of core functionality.  Here's the output of its instructions:
+
+-----------------------------
+TestCore1 must be called with args:
+
+ TestCore1 <cmd> <config_file> [cmd args]
+
+Commands: store, show, update, printMap
+
+Cmd args:
+
+	store:	  	[string]	A string that seeds the test data.
+		      	  [numChunks]	Number of chunks to create
+
+	show:	  	  [entryID]		The vslID of an entry to show.
+
+	update:	  	[entryID]		The vslID of an entry to update.
+		        	[versionID]	The vslID of the version to update.
+
+		      	  [string]	A string that seeds the update data.
+
+		        	[numChunks]	Not used yet but must be passed an int here.
+
+	printMap**:	[bytesToShow]	(Number of bytes of each chunk to show.
+
+
+**printMap takes the db_file rather than the config file as a second argument.
+-----------------------------
+
+CREATE AN ENTRY:
+---------------
 
 To run try (last two args optional):
 
@@ -49,12 +58,105 @@ will generate an Entry with one Version and numChunks data chunks (there's a
 default value) and store them in a vslMMBackend which stores itself to
 filename.  NOTE: the db file is specifyied in the config file.
 
-To read back in and print out the file:
 
-java vsl.test.TestCore1 read <filename> 
+UPDATE AN ENTRY
+---------------
+
+To run try (last two args optional):
+
+java vsl.test.TestCore1 store <config_file> <entryid> <versionid> [data_string] [numChunks]
+
+Example: 
+
+java vsl.test.TestCore1 update config/vsl.cfg  772450591 887385360  SXXXYSDF 4 
+
+Updates version number 887385360 in the entry with id 772450591.
+
+EXAMINE AN ENTRY
+---------------
+
+To run try (last two args optional):
+
+java vsl.test.TestCore1 show <config_file> <entryid> 
+
+Example: 
+
+java vsl.test.TestCore1 show config/vsl.cfg  772450591 
+
+Note that this will display the version tree and allow you to interactively
+examine versions and chunks.
+
+NOTE: this method uses the vsl read functionality not the underlying
+vslMMBackend (unlike printMap below).
+
+DUMP DB:
+--------
+
+To read/dump the contents of the multipmap use:
+
+java vsl.test.TestCore1 printMap <dbfile> 
+
+NOTE: this dumps the multimap directly rather than using the VSL core so it
+needs the db file NOT the vsl-config file.  Its mostly for finding vslIDs and
+examing the backend.
+
+-----------------------------------------------------------------------------------------------
+
+
+================
+FileChunkingTest
+================
+
+This test file chunking now USING vsl core.
+
+To run cd to vsl/src and execute as below.
+
+Chunking
+--------
+
+Chunk a file (in this case vsl_deisng_notes-1.tex) and store in the vsl DB-file mydb:
+
+java vsl.test.FileChunkingTest create config/vsl.cfg  ../test/input/version/vsl_design_notes-1.tex
+
+NOTE: chunking params currently hard-coded (i.e. size of chunk and begin
+token).  Should make them args.
+
+Reading
+-------
+
+Since VSL doesn't yet support reading out entries we can't directly read or
+reconstruct a file but instead we can access it using the printMap method in
+the vslMMBackend but this requires using the TestCore1 class.
+
+java vsl.test.TestCore1 read config/vsl.cfg [numBytes]
+
+By default this method only shows the first 100 bytes of each data entry but by
+providing an arg this can be increased.
+
+
+Rechunking
+----------
+
+This test chunks a file and then tries to chunk the second file while reusing
+as many chunks as it can from the first (i.e. this is a chunk-based diff).  It can be called as follows:
+
+java vsl.test.FileChunkingTest compare <original_file> <modified_file>
+
+To check that its properly rechunking this program can unchunk its internal
+copy of each file and store them into a new file so you can diff them against
+the input files (to make sure the rechunking is working correctly).  
+
+When the test is run it prompts you if you would like it to rebuild the input
+file (both the original and the modified one) from its internally stored chunks
+(note these chunks are not stored to VSL since we don't yet support read/update
+of the core).  By default the new files are stored to <filename>-rebuilt.
 
 
 
+
+-----------------------------------------------------------------------------------------------
+
+=================
 ByteHashSpeedTest
 =================
 
@@ -122,52 +224,25 @@ For instance:
 java vsl.test.ByteHashSpeedTest rechunkSame test_files/version1.pdf test_files/version2.pdf 10000 100
 
 
-FileChunkingTest
+
+-----------------------------------------------------------------------------------------------
+
+================
+SerializingTest:
 ================
 
-This test file chunking now USING vsl core.
+To run test:
 
-To run cd to vsl/src and execute as below.
+java vsl.test.SerializingTest put mykey myval
+java vsl.test.SerializingTest put mykey2 myval2
 
-Chunking
---------
+then 
 
-Chunk a file (in this case vsl_deisng_notes-1.tex) and store in the vsl DB-file mydb:
+java vsl.test.SerializingTest read 
 
-java vsl.test.FileChunkingTest create config/vsl.cfg  ../test/input/version/vsl_design_notes-1.tex
+If we use MultiValueMap from apache need to include classpath:
 
-NOTE: chunking params currently hard-coded (i.e. size of chunk and begin
-token).  Should make them args.
-
-Reading
--------
-
-Since VSL doesn't yet support reading out entries we can't directly read or
-reconstruct a file but instead we can access it using the printMap method in
-the vslMMBackend but this requires using the TestCore1 class.
-
-java vsl.test.TestCore1 read config/vsl.cfg [numBytes]
-
-By default this method only shows the first 100 bytes of each data entry but by
-providing an arg this can be increased.
-
-
-Rechunking
-----------
-
-This test chunks a file and then tries to chunk the second file while reusing
-as many chunks as it can from the first (i.e. this is a chunk-based diff).  It can be called as follows:
-
-java vsl.test.FileChunkingTest compare <original_file> <modified_file>
-
-To check that its properly rechunking this program can unchunk its internal
-copy of each file and store them into a new file so you can diff them against
-the input files (to make sure the rechunking is working correctly).  
-
-When the test is run it prompts you if you would like it to rebuild the input
-file (both the original and the modified one) from its internally stored chunks
-(note these chunks are not stored to VSL since we don't yet support read/update
-of the core).  By default the new files are stored to <filename>-rebuilt.
+javac -cp .:../lib/commons-collections-3.2.1.jar  vsl/test/SerializingTest.java 
 
 
 

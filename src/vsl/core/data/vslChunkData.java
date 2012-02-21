@@ -28,6 +28,8 @@ public class vslChunkData extends vslBackendData {
 	 */
 	public vslHash hash = null;
 	public vslDate	createTime = null;
+	/* we track in which version this chunk was created in */
+	public vslID createdInVersion = null;
 	public vslChunkDataExtra extra = null;
 	public byte[] data = null;
 	

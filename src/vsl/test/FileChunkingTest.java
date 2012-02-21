@@ -2,12 +2,13 @@ package vsl.test;
 
 //import vsl.test.MMStore;
 import vsl.core.vsl;
+import vsl.core.vslDataType;
 import vsl.core.vslException;
 import vsl.core.vslStorageException;
 import vsl.core.vslConfigException;
 
 import vsl.handlers.FileHandler.vslFileHandler;
-import vsl.handlers.FileHandler.vslFileDataType;
+//import vsl.handlers.FileHandler.vslFileDataType;
 import vsl.handlers.FileHandler.vslFileDataChunk;
 import vsl.handlers.FileHandler.byteUtils.ByteDLL;
 import vsl.handlers.FileHandler.byteUtils.ByteWrapper;
@@ -187,7 +188,7 @@ public class FileChunkingTest {
 			}
 			*/
 			chunks = handler.chunkFile(source);
-			vslFileDataType fileData = new vslFileDataType();
+			vslDataType<vslFileDataChunk> fileData = new vslDataType<vslFileDataChunk>();
 			StringTokenizer st = new StringTokenizer(source, "/");
 			String fname = "UNSET";
 			while (st.hasMoreTokens()) {
@@ -195,7 +196,7 @@ public class FileChunkingTest {
 			}
 			fileData.setName(fname);
 			for (vslFileDataChunk chunk: chunks) {
-				fileData.addChunk(chunk);
+				fileData.addNewChunk(chunk);
 			}
 			//db.put(fname, chunks);
 			//db.writeMap();
@@ -284,7 +285,7 @@ public class FileChunkingTest {
 		reBuild(newFile, chunks);
 	}
 
-	private static String getLine() 
+	static String getLine() 
 	{
 		InputStreamReader converter = new InputStreamReader(System.in);
 		BufferedReader in = new BufferedReader(converter); 
