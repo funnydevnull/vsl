@@ -3,7 +3,7 @@ package vsl.core;
 import vsl.core.types.vslID;
 import vsl.core.data.vslBackendData;
 
-import java.util.Vector;
+import java.util.Collection;
 
 public interface vslBackend {
 	
@@ -31,7 +31,8 @@ public interface vslBackend {
 	 * return a Future with the status of the put.  The future should also
 	 * allow retreival of the new entry's ID.
 	 */
-	public vslFuture create(Vector<? extends vslBackendData> entries) throws vslStorageException;
+	public vslFuture create(Collection<? extends vslBackendData> entries) 
+		throws vslStorageException;
 
 	/**
 	 * Add entries to the backend under the given key.  The backend is a
@@ -39,7 +40,7 @@ public interface vslBackend {
 	 * associated with this key.  The backend makes no garauntee about the order
 	 * of entries appended.
 	 */
-	public vslFuture add(vslID id, Vector<? extends vslBackendData> entries) 
+	public vslFuture add(vslID id, Collection<? extends vslBackendData> entries) 
 				throws vslStorageException;
 
 	/**

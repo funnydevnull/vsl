@@ -137,7 +137,7 @@ public class TestCore1  {
 	{
 		if (args.length < 3)
 		{
-			System.err.println("Usage: update <config_file> <entryid>");
+			System.err.println("Usage: show <config_file> <entryid>");
 			System.exit(1);
 		}
 	    myVsl = new vsl(args[1]);
@@ -300,7 +300,7 @@ public class TestCore1  {
 		myVsl.save();
 	}
 
-	/*  -------------- Inner Classes ---------------- */
+	/*  -------------------------- INNER CLASSES ---------------------------- */
 
 	class testChunk extends vslChunk {
 
@@ -312,52 +312,6 @@ public class TestCore1  {
 			return new String(getData());
 		}
 	}
-	/*
-	class testDataType implements vslDataType {
 
-		String name;
-		Vector<vslID> prevIDs = null;
-		Vector<testChunk> oldChunks = new Vector<testChunk>();
-		Vector<testChunk> newChunks = new Vector<testChunk>();
 
-		public String getName()
-		{
-			return name;		
-		}
-
-		public void setName(String name) 
-		{
-			this.name = name;
-		}
-
-		public void setPrevVersions(Vector<vslID> prevIDs)
-		{
-			this.prevIDs = prevIDs;
-		}
-
-		public Vector<vslID> prevVersions()
-		{
-			return prevIDs;
-		}
-
-		public Vector<? extends vslChunk> getNewChunks()
-		{
-			return newChunks;
-		}
-		
-		public Vector<? extends vslChunk> getOldChunks()
-		{
-			return oldChunks;
-		}
-
-		public void addNewChunk(testChunk chunk) {
-			newChunks.add(chunk);
-		}
-		
-		public void addOldChunk(testChunk chunk) {
-			oldChunks.add(chunk);
-		}
-
-	}
-	*/
 }

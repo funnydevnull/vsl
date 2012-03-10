@@ -8,6 +8,26 @@ CONFIGURATION
 
 VSL uses a config file vsl.conf which is located in config/vsl.conf.  
 
+
+ENVIRONMENT & SETUP
+===================
+
+To try running testing VSL the test scripts in vsl/scripts should be used.
+
+The following sequence of commands setups the test environments.  First setup a
+vsl.conf file in vsl/conf.
+
+# cd vsl/scripts
+# source setdevenv.sh
+# testcore1.sh create ...  (see below)
+# testcoreindex.sh create ... (see below)
+
+Once setdevenv.sh has been run the test scripts are in the path and can be run from anywhere.
+
+NOTE: setdevenv.sh uses its current location to correctly setup the path so run
+it from inside vsl/scripts!
+NOTE: all scripts assume vsl.conf is in vsl/config.  
+
 -----------------------------------------------------------------------------------------------
 
 =========
@@ -88,6 +108,116 @@ examine versions and chunks.
 
 NOTE: this method uses the vsl read functionality not the underlying
 vslMMBackend (unlike printMap below).
+
+DUMP DB:
+--------
+
+To read/dump the contents of the multipmap use:
+
+java vsl.test.TestCore1 printMap <dbfile> 
+
+NOTE: this dumps the multimap directly rather than using the VSL core so it
+needs the db file NOT the vsl-config file.  Its mostly for finding vslIDs and
+examing the backend.
+
+-----------------------------------------------------------------------------------------------
+
+=========
+TestCoreIndex
+=========
+
+Basic test of indices in core system.
+
+The best way to run this is using the wrapper script testindex.sh in the scripts dir.
+
+Here's the output of its instructions:
+
+-----------------------------
+TestCoreIndex must be called with args:
+
+ TestCoreIndex <cmd> <config_file> [cmd args]
+
+Commands: create, add, mod, show, printMap
+
+Cmd args:
+
+	create:		create a new index with a single element.
+
+			[data]	The string data for the first element in the index.
+
+	add:		add a new element to the index.
+
+			[indexID]	The vslID of an index where we add the element.
+			[data]		The string data for the first element in the index.
+
+	mod:		update/delete elements in an index interactively.
+
+			[indexID]	The vslID of the index which the element is part of.
+
+	show:		display the structure of an index interactively.
+
+			[indexID]	The vslID of the index which the element is part of.
+
+	printMap**:	[bytesToShow]	(Number of bytes of each chunk to show.
+
+
+**printMap takes the db_file rather than the config file as a second argument.
+-----------------------------
+
+CREATE AN INDEX AND POPULATE IT WITH ONE ELEMENT:
+----------------------------------------------
+
+To run try:
+
+java vsl.test.TestCoreIndex create <config_file> <data_string>
+
+Example: 
+
+java vsl.test.TestCoreIndex create config/vsl.cfg RandomInitialData
+
+will generate an index with one element whose data is "RandomInitialData" and
+store them in a vslMMBackend db.  NOTE: the db file is specifyied in the config
+file.
+
+ADD AN ELEMENT TO AN INDEX:
+--------------------------
+
+To run try:
+
+java vsl.test.TestCoreIndex add <config_file> <indexid> <data_string>
+
+Example: 
+
+java vsl.test.TestCoreIndex create config/vsl.cfg 772450591  NewElementData
+
+
+
+UPDATE AN INDEX ELEMENTS (INTERACTIVELY)
+-------------------------------
+
+To run try (last two args optional):
+
+java vsl.test.TestCoreIndex mod <config_file> <indexID> 
+
+Example: 
+
+java vsl.test.TestCoreIndex mod config/vsl.cfg  772450591 
+
+Prompts the user for input on updating an index with vslID 772450591.
+
+EXAMINE AN INDEX
+---------------
+
+To run:
+
+java vsl.test.TestCoreIndex show <config_file>  <indexid> 
+
+Example: 
+
+java vsl.test.TestCoreIndex show config/vsl.cfg  772450591 
+
+Note that this will display the elements in index and let you interactively update/delete elements.
+Adding elements should be done with the add command.
 
 DUMP DB:
 --------

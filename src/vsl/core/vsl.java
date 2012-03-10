@@ -2,7 +2,7 @@ package vsl.core;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
+import java.util.Collection;
 
 import vsl.core.data.vslBackendData;
 
@@ -18,7 +18,7 @@ public class vsl {
 
 	private static vslConfig config = null;
 
-	private List<String> entries;
+	//private List<String> entries;
 	//private Logger log;
 	
 	public vsl(String configFile) 
@@ -53,6 +53,28 @@ public class vsl {
 		vslEntry select_entry = new vslEntry(entryId);
 		select_entry.load();
 		return select_entry;
+	}
+	
+	public vslID addIndex(vslIndex index)
+		throws vslStorageException
+	{
+		index.store();
+		return index.getID();
+	}
+	
+    public void updateIndex(vslIndex index)
+		throws vslStorageException, vslInputException, vslConsistencyException
+	{
+		index.store();
+		// this won't really work ... we need a reload method!!
+		//index.load();
+	}
+
+    public vslIndex getIndex(vslID entryId, boolean blocking)
+		throws vslStorageException, vslInputException, vslConsistencyException
+	{
+		vslIndex index = new vslIndex(entryId, blocking);
+		return index;
 	}
 
 	public static vslConfig getConfig() {
@@ -97,7 +119,7 @@ public class vsl {
 	/**
 	 * Create a new entry in the backend and populate with the given data set.
 	 */
-	static vslFuture create(Vector<? extends vslBackendData> data)
+	static vslFuture create(Collection<? extends vslBackendData> data)
 		throws vslStorageException
 	{
 		vslFuture res = backend.create(data);
@@ -117,7 +139,7 @@ public class vsl {
 	/**
 	 * Add new entries to an existing backend map. 
 	 */
-	static vslFuture add(vslID id, Vector<? extends vslBackendData> data)
+	static vslFuture add(vslID id, Collection<? extends vslBackendData> data)
 		throws vslStorageException
 	{
 		vslFuture res = backend.add(id, data);
@@ -140,14 +162,15 @@ public class vsl {
 		throws vslException
 	{
 		config = new vslConfig(configFile);
-
 		// init logging first
 		vslLog.init(config);
 
 		// init the backend
 		Class backendClass = null;
 		try {
-			backendClass =  Class.forName(config.getString(config.BACKEND));
+			String backendStr = config.getString(config.BACKEND);
+			vslLog.log(vslLog.INFO, "Using backend: " + backendStr);
+			backendClass =  Class.forName(backendStr);
 			backend = (vslBackend) backendClass.newInstance();
 		}
 		catch (Exception e)

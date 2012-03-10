@@ -126,7 +126,7 @@ public class vslVersion {
 	 * entries, keyed off their id.
 	 *
 	 */
-	public static HashMap<vslID, vslVersion> 
+	static HashMap<vslID, vslVersion> 
 		versionsFromHeaders(Vector<vslVersionHeader> headers)
 			throws vslInputException
 	{
@@ -179,7 +179,7 @@ public class vslVersion {
 	 * this version or the version itself or if the the version has already
 	 * been stored.
 	 */
-	public void store()
+	void store()
 		throws vslStorageException
 	{
 		if (id != null)

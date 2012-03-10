@@ -10,7 +10,8 @@ public class vslException extends Exception {
 	}
 
 	public vslException(Exception e) {
-		super(e.toString());
+		//super(e.toString());
+		super(e);
 		original = e;
 	}
 

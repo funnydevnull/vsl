@@ -20,6 +20,7 @@ import vsl.core.types.vslID;
 
 import java.util.HashMap;
 import java.util.Vector;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Random;
 
@@ -41,7 +42,8 @@ public class vslMMBackend implements vslBackend, Serializable {
 
 
 	// for now use MultiHashMap implementation as backend
-	private HashMap<vslID, Vector<? extends vslBackendData> > storage = null;
+	//private HashMap<vslID, Vector<? extends vslBackendData> > storage = null;
+	private HashMap<vslID, Vector<vslBackendData> > storage = null;
 	private Random randGen;
 	private String dbname = null;
 
@@ -77,7 +79,7 @@ public class vslMMBackend implements vslBackend, Serializable {
 		}
 		else
 		{
-			storage = new HashMap<vslID, Vector<? extends vslBackendData> >();
+			storage = new HashMap<vslID, Vector<vslBackendData> >();
 		}
 	}
 
@@ -125,7 +127,7 @@ public class vslMMBackend implements vslBackend, Serializable {
 	public vslMMFuture add(vslID id, vslBackendData entry) 
 		throws vslStorageException
 	{
-		Vector<vslBackendData> vec = (Vector<vslBackendData>) storage.get(id);
+		Vector<vslBackendData> vec = storage.get(id);
 		vslMMFuture ret = new vslMMFuture();
 		if (vec == null)
 		{
@@ -146,11 +148,13 @@ public class vslMMBackend implements vslBackend, Serializable {
 	 * return a Future with the status of the put.  The future should also
 	 * allow retreival of the new entry's ID.
 	 */
-	public vslFuture create(Vector<? extends vslBackendData> entries) 
+	public vslFuture create(Collection<? extends vslBackendData> entries) 
 		throws vslStorageException
 	{
 		vslID newID = genID();
-		storage.put(newID, entries);
+		Vector<vslBackendData> vec = new Vector<vslBackendData>();
+		vec.addAll(entries);
+		storage.put(newID, vec);
 		vslMMFuture ret = new vslMMFuture();
 		ret.setNewEntryID(newID);
 		ret.setSuccess(true);
@@ -165,10 +169,10 @@ public class vslMMBackend implements vslBackend, Serializable {
 	 * associated with this key.  The backend makes no garauntee about the order
 	 * of entries appended.
 	 */
-	public vslFuture add(vslID id, Vector<? extends vslBackendData> entries) 
+	public vslFuture add(vslID id, Collection<? extends vslBackendData> entries) 
 				throws vslStorageException
 	{
-		Vector<vslBackendData> vec = (Vector<vslBackendData>)storage.get(id);
+		Vector<vslBackendData> vec = storage.get(id);
 		vslMMFuture ret = new vslMMFuture();
 		if (vec == null)
 		{
@@ -192,7 +196,7 @@ public class vslMMBackend implements vslBackend, Serializable {
 	public vslFuture getEntry(vslID id) 
 		throws vslStorageException
 	{
-		Vector<? extends vslBackendData> vec = storage.get(id);
+		Vector<vslBackendData> vec = storage.get(id);
 		vslMMFuture ret = new vslMMFuture();
 		if (vec == null)
 		{
@@ -264,7 +268,7 @@ public class vslMMBackend implements vslBackend, Serializable {
 			FileInputStream fis = new FileInputStream(dbname);
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			//vslMMBackend fmap = (vslMMBackend) ois.readObject();
-			storage = (HashMap<vslID, Vector<? extends vslBackendData>>) ois.readObject();
+			storage = (HashMap<vslID, Vector<vslBackendData>>) ois.readObject();
 			ois.close();
 		} 
 		catch (Exception e)

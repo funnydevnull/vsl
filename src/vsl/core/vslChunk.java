@@ -34,11 +34,11 @@ public class vslChunk {
 	 */
 	private boolean dataLoaded = false;
 	
-	public vslChunk() {
+	protected vslChunk() {
 	}
 	
 	
-	public vslChunk(byte[] d) {
+	protected vslChunk(byte[] d) {
 		setData(d);
 		createTime = new vslDate();
 	}
@@ -92,7 +92,7 @@ public class vslChunk {
 	 * Return a vslChunkHeader representation of this chunk used to store a
 	 * "summary" of the chunk in the "version" entry in the backend.
 	 */
-	public vslChunkHeader getChunkHeader()
+	vslChunkHeader getChunkHeader()
 	{
 		vslChunkHeader header = new vslChunkHeader();
 		header.id = this.id;
